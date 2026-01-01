@@ -10,11 +10,11 @@ import jakarta.ws.rs.client.Entity;
 public class UserServiceImpl implements UserService {
     private final WebTarget webTarget;
     private final jakarta.ws.rs.client.Client client;
-    private static final String BASE_URI = "http://localhost:8080/UserService/rest/api";
+    private static final String BASE_URI = "http://localhost:8080/PR1_sob_grup_54/rest/api/v1/customer";
     
     public UserServiceImpl() {
         client = jakarta.ws.rs.client.ClientBuilder.newClient();
-        webTarget = client.target(BASE_URI).path("user");
+        webTarget = client.target(BASE_URI).path("customer");
     }
     
     @Override
