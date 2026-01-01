@@ -42,6 +42,8 @@ public class SignUpFormController {
     @CsrfProtected
     public String signUp(@Valid @BeanParam UserForm userForm) {
         models.put("user", userForm);
+        
+        // 1. Validaciones del formulario (campos vacíos, longitud, etc.)
         if (bindingResult.isFailed()) {
             AlertMessage alert = AlertMessage.danger("Validation failed!");
             bindingResult.getAllErrors()
@@ -54,21 +56,27 @@ public class SignUpFormController {
             return "signup-form.jsp";
         }
         
+        // 2. Comprobar intentos máximos
         if(attempts.hasExceededMaxAttempts()) {
             return "signup-form.jsp";
         }
        
-        User user = service.findUserByEmail(userForm.getEmail());
-        if (user != null) {
-            // Try again
-            log.log(Level.WARNING, "A user with this e-mail address {0} already exists.", userForm.getEmail());
-            models.put("message", "A user with this e-mail address already exists!");
+        // 3. Intento de registro
+        log.log(Level.INFO, "Attempting to register user: " + userForm.getUsername());
+        
+        // CORRECCIÓN: Capturamos si el backend aceptó o rechazó el registro
+        boolean success = service.addUser(userForm);
+        
+        if (success) {
+            log.log(Level.INFO, "User registered successfully. Redirecting to success page.");
+            attempts.reset();
+            return "signup-success.jsp";
+        } else {
+            // Si devuelve false, es probable que el Username ya exista (409 Conflict)
+            log.log(Level.WARNING, "Registration failed (Backend returned non-201 status). Username likely taken.");
+            models.put("message", "Registration failed! The username might already be taken.");
             attempts.increment();
             return "signup-form.jsp";
         }
-        log.log(Level.INFO, "Redirecting to the success page.");
-        service.addUser(userForm);
-        attempts.reset();
-        return "signup-success.jsp";
     } 
 }
