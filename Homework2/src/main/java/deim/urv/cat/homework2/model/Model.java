@@ -10,6 +10,8 @@ import java.util.List;
 
 public class Model implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     private Long id;
     private String name;
     private String provider; 
@@ -32,15 +34,16 @@ public class Model implements Serializable {
     private String languages;
     
     // Control de privacidad
-    // Aseguramos que el JSON 'isPrivate' o 'private' se mapee aquí
-    @JsonbProperty("private") 
+    // Mapea tanto si el JSON trae "private":true como "isPrivate":true
+    @JsonbProperty("private")
     private boolean isPrivate;
 
-    // CONSTRUCTOR VACÍO OBLIGATORIO para JAX-RS/JSON-B
+    // CONSTRUCTOR VACÍO (Obligatorio para JAX-RS)
     public Model() {
     }
 
     // Getters y Setters
+
     public Long getId() {
         return id;
     }
@@ -185,15 +188,16 @@ public class Model implements Serializable {
         this.languages = languages;
     }
 
-    // Corregimos el getter para que sea estándar y amigable con JSON
-    public boolean isIsPrivate() { 
+    // Getter estándar para Boolean
+    public boolean isPrivate() {
         return isPrivate;
     }
-
-    public void setIsPrivate(boolean isPrivate) {
+    
+    // Setter estándar
+    public void setPrivate(boolean isPrivate) {
         this.isPrivate = isPrivate;
     }
-    
+
     // Helper para evitar nulls en la vista
     private String fixNull(String in) {
         return (in == null) ? "" : in;

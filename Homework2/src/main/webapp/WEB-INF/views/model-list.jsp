@@ -99,7 +99,8 @@
                     <div class="col-md-4 col-sm-6" style="margin-bottom: 20px;">
                         <div class="card panel panel-default">
                             <div class="panel-body" style="position: relative;">
-                                <c:if test="${model.isPrivate}">
+                                <%-- USO CORRECTO DEL BOOLEANO --%>
+                                <c:if test="${model.private}">
                                     <span class="glyphicon glyphicon-lock private-icon" title="Private Model"></span>
                                 </c:if>
                                 
@@ -115,7 +116,6 @@
                                 </div>
                                 
                                 <hr>
-                                
                                 <h4>
                                     <a href="${pageContext.request.contextPath}/Web/models/detail?id=${model.id}">
                                         ${model.name}
