@@ -24,17 +24,14 @@
                             We'll keep you posted on the latest news, product updates and exam tips for
                             the SOB course!
                         </p>
-			<table class="table table-striped table-bordered">
-				<tr>
-					<td><b>First Name </b>: ${user.firstName}</td>
-				</tr>
-				<tr>
-					<td><b>Last Name </b>: ${user.lastName}</td>
-				</tr>
-				<tr>
-					<td><b>Email </b>: ${user.email}</td>
-				</tr>
-			</table>
+                            <table class="table table-striped table-bordered">
+                                <tr>
+                                    <td><b>Name </b>: ${user.name}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Email </b>: ${user.email}</td>
+                                </tr>
+                            </table>
                         <a class="btn btn-sm btn-info text-white" href="<c:url value="/Web/SignUp" />">Go Back</a>
 		</div>
 	</div>
