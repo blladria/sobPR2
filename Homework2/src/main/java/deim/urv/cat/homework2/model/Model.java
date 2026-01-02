@@ -4,13 +4,15 @@
  */
 package deim.urv.cat.homework2.model;
 
+import jakarta.json.bind.annotation.JsonbProperty;
+import java.io.Serializable;
 import java.util.List;
 
-public class Model {
+public class Model implements Serializable {
 
     private Long id;
     private String name;
-    private String provider; // OpenAI, Anthropic, etc.
+    private String provider; 
     private String logo; 
     private String mainCapability;
     private String summary;
@@ -30,7 +32,13 @@ public class Model {
     private String languages;
     
     // Control de privacidad
+    // Aseguramos que el JSON 'isPrivate' o 'private' se mapee aquí
+    @JsonbProperty("private") 
     private boolean isPrivate;
+
+    // CONSTRUCTOR VACÍO OBLIGATORIO para JAX-RS/JSON-B
+    public Model() {
+    }
 
     // Getters y Setters
     public Long getId() {
@@ -177,7 +185,8 @@ public class Model {
         this.languages = languages;
     }
 
-    public boolean isIsPrivate() { // Naming convention JSON mapping
+    // Corregimos el getter para que sea estándar y amigable con JSON
+    public boolean isIsPrivate() { 
         return isPrivate;
     }
 

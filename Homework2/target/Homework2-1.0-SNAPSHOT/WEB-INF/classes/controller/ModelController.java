@@ -13,7 +13,10 @@ import jakarta.mvc.Models;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Path("models")
 @Controller
@@ -22,7 +25,7 @@ public class ModelController {
     @Inject
     private Models models;
     
-    // Instanciamos el servicio. En un entorno CDI completo podrías usar @Inject también aquí.
+    // Instanciamos el servicio.
     private final ModelService service = new ModelServiceImpl();
 
     @GET
@@ -30,18 +33,30 @@ public class ModelController {
             @QueryParam("capability") List<String> capabilities,
             @QueryParam("provider") String provider) {
 
-        // 1. Obtener datos del Backend
-        List<Model> list = service.findAll(capabilities, provider);
+        try {
+            // 1. Obtener datos del Backend de forma segura
+            List<Model> list = service.findAll(capabilities, provider);
+            
+            if (list == null) {
+                list = new ArrayList<>();
+            }
 
-        // 2. Pasarlos a la vista
-        models.put("modelList", list);
-        
-        // 3. Pasar los filtros actuales para mantenerlos en el formulario
-        models.put("selectedProvider", provider);
-        // Nota: Pasar la lista de capacidades seleccionadas requiere un poco más de lógica en el JSP,
-        // por simplicidad lo omitimos aquí, pero el provider sí se mantendrá.
+            // 2. Pasarlos a la vista (Verificando que models no sea null por problemas de CDI)
+            if (models != null) {
+                models.put("modelList", list);
+                models.put("selectedProvider", provider);
+            } else {
+                Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error: Objeto 'models' es nulo. Fallo de inyección CDI.");
+            }
+            
+        } catch (Exception e) {
+            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error fatal en ModelController", e);
+            // Opcional: Podrías redirigir a una página de error, pero por ahora mostramos la lista vacía
+            if (models != null) models.put("modelList", new ArrayList<>());
+        }
 
         // 4. Retornar el nombre de la vista (JSP)
+        // Asegúrate que el fichero existe en /WEB-INF/views/model-list.jsp
         return "model-list.jsp";
     }
 }
