@@ -25,7 +25,7 @@
                 </div>
                 <div class="panel-body">
                     
-                    <form action="${pageContext.request.contextPath}/mvc/SignUp" method="POST" class="form-horizontal" role="form">
+                    <form action="${pageContext.request.contextPath}/Web/SignUp" method="POST" class="form-horizontal" role="form">
                         
                         <input type="hidden" name="${mvc.csrf.name}" value="${mvc.csrf.token}"/>
 
