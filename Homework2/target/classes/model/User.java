@@ -8,7 +8,6 @@ public class User implements Serializable {
 
     private Long id;
     private String name;
-    private String surname; // Coincide con el backend y la vista
     private String username;
     private String email;
     private String password;
@@ -18,7 +17,7 @@ public class User implements Serializable {
     public User() {
     }
 
-    // Getters y Setters
+    // Getters y Setters coincidiendo exactamente con Customer.java
     public Long getId() {
         return id;
     }
@@ -33,14 +32,6 @@ public class User implements Serializable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getSurname() {
-        return surname;
-    }
-
-    public void setSurname(String surname) {
-        this.surname = surname;
     }
 
     public String getUsername() {

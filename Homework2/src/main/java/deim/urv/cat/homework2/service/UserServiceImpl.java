@@ -13,21 +13,16 @@ import java.util.Base64;
 
 public class UserServiceImpl implements UserService {
 
-    private final WebTarget webTarget;
     private final Client client;
-    // URL de tu Backend (Práctica 1)
     private static final String BASE_URI = "http://localhost:8080/PR1_sob_grup_54/rest/api/v1";
 
     public UserServiceImpl() {
         this.client = ClientBuilder.newClient();
-        this.webTarget = client.target(BASE_URI).path("customer");
     }
 
-    // Generación robusta de cabecera Basic Auth
     private String getAuthHeader(String username, String password) {
         String auth = username + ":" + password;
-        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
-        return "Basic " + new String(encodedAuth);
+        return "Basic " + Base64.getEncoder().encodeToString(auth.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -35,7 +30,6 @@ public class UserServiceImpl implements UserService {
         if (username == null || password == null) {
             return null;
         }
-
         try {
             Response response = client.target(BASE_URI)
                     .path("customer")
@@ -44,13 +38,13 @@ public class UserServiceImpl implements UserService {
                     .header("Authorization", getAuthHeader(username, password))
                     .get();
 
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+            if (response.getStatus() == 200) {
                 User user = response.readEntity(User.class);
-                user.setPassword(password); // Guardamos la pass para el objeto de sesión
+                user.setPassword(password);
                 return user;
             }
         } catch (Exception e) {
-            // Log de error opcional
+            e.printStackTrace();
         }
         return null;
     }
@@ -62,16 +56,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean addUser(UserForm userForm) {
+        User newUser = new User();
+        newUser.setName(userForm.getName());
+        newUser.setUsername(userForm.getUsername());
+        newUser.setEmail(userForm.getEmail());
+        newUser.setPassword(userForm.getPassword());
+
         try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON)
-                    .post(Entity.entity(userForm, MediaType.APPLICATION_JSON));
+            Response response = client.target(BASE_URI)
+                    .path("customer")
+                    .request(MediaType.APPLICATION_JSON)
+                    .post(Entity.entity(newUser, MediaType.APPLICATION_JSON));
             return response.getStatus() == Response.Status.CREATED.getStatusCode();
         } catch (Exception e) {
             return false;
         }
     }
 
-    // Método de actualización (utilizado por el ModelController para actualizar el ID del último modelo)
+    @Override
     public void updateUser(User user, String password) {
         try {
             client.target(BASE_URI)
@@ -81,7 +83,7 @@ public class UserServiceImpl implements UserService {
                     .header("Authorization", getAuthHeader(user.getUsername(), password))
                     .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         } catch (Exception e) {
-            // Error silencioso
+            e.printStackTrace();
         }
     }
 }

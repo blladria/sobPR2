@@ -67,13 +67,9 @@
                         <p class="text-muted"><c:out value="${userProfile.email}"/></p>
 
                         <div class="row mt-4 text-start">
-                            <div class="col-6 mb-3">
-                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Nom</small>
+                            <div class="col-12 mb-3">
+                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Nom Complet</small>
                                 <span class="fw-bold"><c:out value="${userProfile.name}"/></span>
-                            </div>
-                            <div class="col-6 mb-3">
-                                <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.7rem;">Cognoms</small>
-                                <span class="fw-bold"><c:out value="${userProfile.surname}"/></span>
                             </div>
                         </div>
                     </div>
@@ -111,6 +107,5 @@
                 </div>
             </div>
         </div>
-
     </body>
 </html>

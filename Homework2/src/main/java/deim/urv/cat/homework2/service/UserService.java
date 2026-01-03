@@ -5,12 +5,15 @@ import deim.urv.cat.homework2.controller.UserForm;
 
 public interface UserService {
 
-    // Método principal para Login (usado por LoginController)
+    // Para el Login
     public User validateUser(String username, String password);
 
-    // Alias o método para obtener datos frescos (usado por ProfileController)
+    // Para el Perfil
     public User getUser(String username, String password);
 
-    // Método para registro (usado por SignUpController)
+    // Para el Registro
     public boolean addUser(UserForm userForm);
+
+    // Para actualizar el lastConsultedModelId (Requisito de la práctica)
+    public void updateUser(User user, String password);
 }
