@@ -99,8 +99,7 @@
                     <div class="col-md-4 col-sm-6" style="margin-bottom: 20px;">
                         <div class="card panel panel-default">
                             <div class="panel-body" style="position: relative;">
-                                <%-- USO CORRECTO DEL BOOLEANO --%>
-                                <c:if test="${model.private}">
+                                <c:if test="${model.isPrivate()}">
                                     <span class="glyphicon glyphicon-lock private-icon" title="Private Model"></span>
                                 </c:if>
                                 

@@ -1,7 +1,6 @@
 deim\urv\cat\homework2\model\AlertMessage.class
 deim\urv\cat\homework2\resources\JakartaEE9Resource.class
 deim\urv\cat\homework2\model\AlertMessage$Error.class
-deim\urv\cat\homework2\model\AlertMessage$1.class
 deim\urv\cat\homework2\Config.class
 deim\urv\cat\homework2\exception\PropertyException.class
 deim\urv\cat\homework2\PropertyProducer.class

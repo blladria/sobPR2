@@ -1,15 +1,15 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package deim.urv.cat.homework2.controller;
 
 import deim.urv.cat.homework2.model.Model;
+import deim.urv.cat.homework2.model.User;
 import deim.urv.cat.homework2.service.ModelService;
 import deim.urv.cat.homework2.service.ModelServiceImpl;
 import jakarta.inject.Inject;
 import jakarta.mvc.Controller;
 import jakarta.mvc.Models;
+import jakarta.mvc.UriRef;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
@@ -25,38 +25,64 @@ public class ModelController {
     @Inject
     private Models models;
     
-    // Instanciamos el servicio.
+    @Inject
+    private HttpServletRequest request; // Necesario para la sesión
+    
+    // Instanciamos el servicio (Mantenemos tu patrón actual)
     private final ModelService service = new ModelServiceImpl();
 
     @GET
     public String showModels(
             @QueryParam("capability") List<String> capabilities,
             @QueryParam("provider") String provider) {
-
+        // ... (Tu código existente showModels aquí) ...
+        // [Mantenlo igual que en tu fichero original]
         try {
-            // 1. Obtener datos del Backend de forma segura
             List<Model> list = service.findAll(capabilities, provider);
-            
-            if (list == null) {
-                list = new ArrayList<>();
-            }
-
-            // 2. Pasarlos a la vista (Verificando que models no sea null por problemas de CDI)
+            if (list == null) list = new ArrayList<>();
             if (models != null) {
                 models.put("modelList", list);
                 models.put("selectedProvider", provider);
-            } else {
-                Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error: Objeto 'models' es nulo. Fallo de inyección CDI.");
             }
-            
         } catch (Exception e) {
-            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error fatal en ModelController", e);
-            // Opcional: Podrías redirigir a una página de error, pero por ahora mostramos la lista vacía
+            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error en ModelController", e);
             if (models != null) models.put("modelList", new ArrayList<>());
         }
-
-        // 4. Retornar el nombre de la vista (JSP)
-        // Asegúrate que el fichero existe en /WEB-INF/views/model-list.jsp
         return "model-list.jsp";
+    }
+
+    // --- NUEVO MÉTODO PARA EL DETALLE ---
+    @GET
+    @Path("detail")
+    @UriRef("detail")
+    public String showDetail(@QueryParam("id") Long id) {
+        try {
+            // 1. Recuperar credenciales de la sesión si existen
+            HttpSession session = request.getSession(false);
+            String username = null;
+            String password = null;
+
+            if (session != null && session.getAttribute("user") != null) {
+                User user = (User) session.getAttribute("user");
+                username = user.getUsername();
+                password = user.getPassword(); // Necesitamos la password en texto plano para Basic Auth
+            }
+
+            // 2. Llamar al servicio pasando credenciales
+            Model model = service.find(id, username, password);
+
+            // 3. Pasar el modelo a la vista
+            if (model != null) {
+                models.put("model", model);
+                return "model-detail.jsp";
+            } else {
+                // Si es privado y no hay login, o no existe, el servicio devuelve null
+                models.put("error", "Model not found or access denied.");
+                return "model-list.jsp"; // O una página de error
+            }
+        } catch (Exception e) {
+            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error retrieving model detail", e);
+            return "error.jsp"; // Asegúrate de tener una página de error o redirigir
+        }
     }
 }

@@ -4,7 +4,8 @@ import deim.urv.cat.homework2.model.User;
 import deim.urv.cat.homework2.controller.UserForm;
 
 public interface UserService {
-    
     public User findUserByEmail(String email);
     public boolean addUser(UserForm user);
+    // Nuevo método
+    public User validateUser(String username, String password);
 }
