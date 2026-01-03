@@ -44,17 +44,39 @@ public class ModelController {
     public String listModels(@QueryParam("capability") String capability,
             @QueryParam("provider") String provider) {
 
+        System.out.println("--- INICIO listModels ---");
+        System.out.println("Filtros recibidos -> Capability: " + capability + ", Provider: " + provider);
+
         // 1. Obtener SIEMPRE todos los modelos del backend
-        List<Model> allModels = modelService.findAll(null, null);
-        
+        List<Model> allModels = new ArrayList<>();
+        try {
+            allModels = modelService.findAll(null, null);
+        } catch (Exception e) {
+            System.out.println("ERROR CRÍTICO llamando al servicio REST: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        if (allModels == null) {
+            System.out.println("ADVERTENCIA: El servicio devolvió NULL. Inicializando lista vacía.");
+            allModels = new ArrayList<>();
+        }
+
+        System.out.println("Modelos recuperados del Backend: " + allModels.size());
+
         List<Model> filteredList = new ArrayList<>();
         Set<String> uniqueCapabilities = new TreeSet<>();
         Set<String> uniqueProviders = new TreeSet<>();
 
         // 2. Procesar filtros y limpiar datos
         for (Model m : allModels) {
-            
-            // Generar opciones para desplegables
+            // Protección contra modelos nulos (por si acaso)
+            if (m == null) {
+                continue;
+            }
+
+            // Debug rápido de qué estamos procesando
+            // System.out.println("Procesando modelo: " + m.getName());
+            // A) Generar opciones para desplegables
             if (m.getProvider() != null && !m.getProvider().isEmpty()) {
                 uniqueProviders.add(m.getProvider());
             }
@@ -70,17 +92,16 @@ public class ModelController {
                 }
             }
 
-            // Aplicar Filtros (Frontend Filtering)
-            boolean matchesProvider = (provider == null || provider.trim().isEmpty()) || 
-                                      (m.getProvider() != null && m.getProvider().equals(provider));
+            // B) LÓGICA DE FILTRADO
+            boolean matchesProvider = (provider == null || provider.trim().isEmpty())
+                    || (m.getProvider() != null && m.getProvider().equals(provider));
 
             boolean matchesCapability = (capability == null || capability.trim().isEmpty());
-            
+
             if (!matchesCapability) {
                 if (m.getMainCapability() != null && formatText(m.getMainCapability()).equals(capability)) {
                     matchesCapability = true;
-                }
-                else if (m.getCapabilities() != null) {
+                } else if (m.getCapabilities() != null) {
                     for (String cap : m.getCapabilities()) {
                         if (formatText(cap).equals(capability)) {
                             matchesCapability = true;
@@ -95,17 +116,27 @@ public class ModelController {
             }
         }
 
-        // --- ORDENACIÓN Z-A (Requisito) ---
-        Collections.sort(filteredList, new Comparator<Model>() {
-            @Override
-            public int compare(Model m1, Model m2) {
-                String n1 = m1.getName();
-                String n2 = m2.getName();
-                if (n1 == null) n1 = "";
-                if (n2 == null) n2 = "";
-                return n2.compareToIgnoreCase(n1); // Orden Inverso
-            }
-        });
+        System.out.println("Modelos tras el filtrado: " + filteredList.size());
+
+        // --- ORDENACIÓN Z-A ---
+        try {
+            Collections.sort(filteredList, new Comparator<Model>() {
+                @Override
+                public int compare(Model m1, Model m2) {
+                    String n1 = m1.getName();
+                    String n2 = m2.getName();
+                    if (n1 == null) {
+                        n1 = "";
+                    }
+                    if (n2 == null) {
+                        n2 = "";
+                    }
+                    return n2.compareToIgnoreCase(n1); // Orden Inverso
+                }
+            });
+        } catch (Exception e) {
+            System.out.println("Error al ordenar la lista: " + e.getMessage());
+        }
 
         // 3. Pasar los datos a la vista
         models.put("modelList", filteredList);
@@ -153,15 +184,19 @@ public class ModelController {
     }
 
     private String formatText(String input) {
-        if (input == null) return "";
+        if (input == null) {
+            return "";
+        }
         String text = input.replace("-", " ");
         StringBuilder result = new StringBuilder();
         String[] words = text.split("\\s+");
         for (String word : words) {
             if (!word.isEmpty()) {
-                if (result.length() > 0) result.append(" ");
+                if (result.length() > 0) {
+                    result.append(" ");
+                }
                 result.append(Character.toUpperCase(word.charAt(0)))
-                      .append(word.substring(1).toLowerCase());
+                        .append(word.substring(1).toLowerCase());
             }
         }
         return result.toString();
