@@ -43,31 +43,26 @@ public class ModelController {
     public String listModels(@QueryParam("capability") String capability,
             @QueryParam("provider") String provider) {
 
-        // 0. Preparar el filtro
-        // Recibimos un String del formulario, pero el servicio espera una Lista.
-        List<String> capabilities = new ArrayList<>();
-        if (capability != null && !capability.trim().isEmpty()) {
-            capabilities.add(capability);
-        }
-
-        // 1. Obtener la lista filtrada para MOSTRAR los modelos
-        List<Model> list = modelService.findAll(capabilities, provider);
-        models.put("modelList", list);
-
-        // 2. Obtener TODOS los modelos para generar los desplegables (Filtros)
+        // 1. Obtener SIEMPRE todos los modelos del backend (sin filtrar allí)
         List<Model> allModels = modelService.findAll(null, null);
 
-        // --- GESTIÓN DE CAPABILITIES (Solución de duplicados y formato) ---
-        // Usamos TreeSet para que salgan ordenados y sin repetidos
+        // Listas para almacenar los resultados filtrados y las opciones de los desplegables
+        List<Model> filteredList = new ArrayList<>();
         Set<String> uniqueCapabilities = new TreeSet<>();
+        Set<String> uniqueProviders = new TreeSet<>();
 
+        // 2. Recorremos TODOS los modelos una sola vez
         for (Model m : allModels) {
-            // Capacidad principal
+
+            // A) Generar las opciones para los desplegables (Providers)
+            if (m.getProvider() != null && !m.getProvider().isEmpty()) {
+                uniqueProviders.add(m.getProvider());
+            }
+
+            // B) Generar las opciones para los desplegables (Capabilities normalizadas)
             if (m.getMainCapability() != null && !m.getMainCapability().isEmpty()) {
-                // APLICAMOS FORMATEO: Quita guiones y pone Mayúsculas (Title Case)
                 uniqueCapabilities.add(formatText(m.getMainCapability()));
             }
-            // Lista de capacidades secundarias
             if (m.getCapabilities() != null) {
                 for (String cap : m.getCapabilities()) {
                     if (cap != null && !cap.isEmpty()) {
@@ -75,17 +70,41 @@ public class ModelController {
                     }
                 }
             }
-        }
-        models.put("allCapabilities", uniqueCapabilities);
 
-        // --- GESTIÓN DE PROVIDERS ---
-        Set<String> uniqueProviders = new TreeSet<>();
-        for (Model m : allModels) {
-            if (m.getProvider() != null && !m.getProvider().isEmpty()) {
-                uniqueProviders.add(m.getProvider()); // Asumimos que el provider ya viene bien formateado
+            // C) LÓGICA DE FILTRADO (Aquí arreglamos el problema)
+            // Comprobamos si el modelo cumple con el Provider seleccionado
+            boolean matchesProvider = (provider == null || provider.trim().isEmpty())
+                    || (m.getProvider() != null && m.getProvider().equals(provider));
+
+            // Comprobamos si el modelo cumple con la Capability seleccionada
+            // Usamos formatText() aquí también para que "Code Generation" coincida con "code-generation"
+            boolean matchesCapability = (capability == null || capability.trim().isEmpty());
+
+            if (!matchesCapability) { // Si hay algo seleccionado en el filtro...
+                // Verificar Main Capability
+                if (m.getMainCapability() != null && formatText(m.getMainCapability()).equals(capability)) {
+                    matchesCapability = true;
+                } // Verificar lista de Capabilities
+                else if (m.getCapabilities() != null) {
+                    for (String cap : m.getCapabilities()) {
+                        if (formatText(cap).equals(capability)) {
+                            matchesCapability = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Si cumple AMBOS filtros, lo añadimos a la lista que se mostrará
+            if (matchesProvider && matchesCapability) {
+                filteredList.add(m);
             }
         }
-        models.put("allProviders", uniqueProviders);
+
+        // 3. Pasar los datos a la vista
+        models.put("modelList", filteredList); // La lista filtrada manualmente
+        models.put("allCapabilities", uniqueCapabilities); // Opciones del desplegable
+        models.put("allProviders", uniqueProviders); // Opciones del desplegable
 
         return "model-list.jsp";
     }
@@ -120,7 +139,6 @@ public class ModelController {
 
         } catch (NotAuthorizedException e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.INFO, "Acceso no autorizado a modelo privado.");
-            // Redirección inteligente: volvemos a intentar ir a models/ID tras loguearnos
             return "redirect:/login?returnUrl=models/" + id;
         } catch (Exception e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error en showDetail", e);
@@ -130,7 +148,7 @@ public class ModelController {
 
     /**
      * Método auxiliar para limpiar y estandarizar los textos. Convierte
-     * "code-generation" o "code generation" -> "Code Generation".
+     * "code-generation" -> "Code Generation".
      */
     private String formatText(String input) {
         if (input == null) {
@@ -140,7 +158,7 @@ public class ModelController {
         // 1. Reemplazar guiones por espacios
         String text = input.replace("-", " ");
 
-        // 2. Convertir a "Title Case" (Primera letra de cada palabra en mayúscula)
+        // 2. Convertir a "Title Case"
         StringBuilder result = new StringBuilder();
         String[] words = text.split("\\s+");
 
@@ -149,7 +167,6 @@ public class ModelController {
                 if (result.length() > 0) {
                     result.append(" ");
                 }
-                // Primera letra mayúscula, resto minúscula
                 result.append(Character.toUpperCase(word.charAt(0)))
                         .append(word.substring(1).toLowerCase());
             }
