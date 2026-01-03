@@ -28,8 +28,8 @@
                 right: 10px;
                 color: #dc3545;
                 font-size: 1.2rem;
-                z-index: 100; /* Asegura que el candado quede encima de todo */
-                background: rgba(255,255,255,0.7); /* Un pequeño fondo para que resalte */
+                z-index: 100;
+                background: rgba(255,255,255,0.7);
                 border-radius: 50%;
                 padding: 5px;
             }
@@ -80,9 +80,11 @@
                         <label for="capability">Capability:</label>
                         <select name="capability" class="form-control">
                             <option value="">All Capabilities</option>
-                            <option value="chat-completion" ${param.capability == 'chat-completion' ? 'selected' : ''}>Chat Completion</option>
-                            <option value="image-generation" ${param.capability == 'image-generation' ? 'selected' : ''}>Image Generation</option>
-                            <option value="code-generation" ${param.capability == 'code-generation' ? 'selected' : ''}>Code Generation</option>
+
+                            <option value="Chat Completion" ${param.capability == 'Chat Completion' ? 'selected' : ''}>Chat Completion</option>
+                            <option value="Image Generation" ${param.capability == 'Image Generation' ? 'selected' : ''}>Image Generation</option>
+                            <option value="Code Generation" ${param.capability == 'Code Generation' ? 'selected' : ''}>Code Generation</option>
+
                         </select>
                     </div>
 
