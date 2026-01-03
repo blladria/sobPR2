@@ -20,6 +20,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -71,13 +73,12 @@ public class ModelController {
                 }
             }
 
-            // C) LÓGICA DE FILTRADO (Aquí arreglamos el problema)
+            // C) LÓGICA DE FILTRADO
             // Comprobamos si el modelo cumple con el Provider seleccionado
             boolean matchesProvider = (provider == null || provider.trim().isEmpty())
                     || (m.getProvider() != null && m.getProvider().equals(provider));
 
             // Comprobamos si el modelo cumple con la Capability seleccionada
-            // Usamos formatText() aquí también para que "Code Generation" coincida con "code-generation"
             boolean matchesCapability = (capability == null || capability.trim().isEmpty());
 
             if (!matchesCapability) { // Si hay algo seleccionado en el filtro...
@@ -101,8 +102,20 @@ public class ModelController {
             }
         }
 
+        // --- IMPLEMENTACIÓN NUEVA: ORDENACIÓN DESCENDENTE (Z-A) ---
+        // Requisito 2.1: "ordenats alfabèticament de forma descendent"
+        Collections.sort(filteredList, new Comparator<Model>() {
+            @Override
+            public int compare(Model m1, Model m2) {
+                String n1 = (m1.getName() != null) ? m1.getName() : "";
+                String n2 = (m2.getName() != null) ? m2.getName() : "";
+                // m2 compareTo m1 para orden descendente
+                return n2.compareToIgnoreCase(n1);
+            }
+        });
+
         // 3. Pasar los datos a la vista
-        models.put("modelList", filteredList); // La lista filtrada manualmente
+        models.put("modelList", filteredList); // La lista filtrada y ordenada
         models.put("allCapabilities", uniqueCapabilities); // Opciones del desplegable
         models.put("allProviders", uniqueProviders); // Opciones del desplegable
 
@@ -128,6 +141,7 @@ public class ModelController {
                 models.put("model", model);
                 if (currentUser != null) {
                     currentUser.setLastConsultedModelId(id);
+                    // Actualizamos el usuario en backend para persistir el "Last Consulted"
                     if (userService instanceof UserServiceImpl) {
                         ((UserServiceImpl) userService).updateUser(currentUser, password);
                     }

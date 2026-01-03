@@ -7,6 +7,7 @@ deim\urv\cat\homework2\MvcEventListener.class
 deim\urv\cat\homework2\model\User.class
 deim\urv\cat\homework2\controller\SignUpFormController.class
 deim\urv\cat\homework2\service\ModelServiceImpl$1.class
+deim\urv\cat\homework2\controller\ModelController$1.class
 deim\urv\cat\homework2\controller\ModelController.class
 deim\urv\cat\homework2\Property.class
 deim\urv\cat\homework2\controller\LogoutController.class
