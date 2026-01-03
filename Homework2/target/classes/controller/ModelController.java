@@ -22,7 +22,7 @@ import jakarta.ws.rs.QueryParam;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet; // Importante para ordenar alfabéticamente
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,42 +43,41 @@ public class ModelController {
     public String listModels(@QueryParam("capability") String capability,
             @QueryParam("provider") String provider) {
 
-        // 0. Preparar el filtro de capabilities
-        // Recibimos un String del formulario, pero el servicio espera una Lista.
+        // 0. Preparar el filtro
         List<String> capabilities = new ArrayList<>();
         if (capability != null && !capability.trim().isEmpty()) {
             capabilities.add(capability);
         }
 
-        // 1. Obtener la lista filtrada para MOSTRAR los modelos
+        // 1. Obtener la lista filtrada para MOSTRAR
         List<Model> list = modelService.findAll(capabilities, provider);
         models.put("modelList", list);
 
-        // 2. Obtener TODOS los modelos para generar los desplegables
+        // 2. Obtener TODOS los modelos para los DESPLEGABLES
         List<Model> allModels = modelService.findAll(null, null);
 
-        // Usamos TreeSet para que las opciones aparezcan ordenadas alfabéticamente
+        // Usamos TreeSet para ordenar y evitar duplicados
         Set<String> uniqueCapabilities = new TreeSet<>();
 
         for (Model m : allModels) {
-            // Añadir la capacidad principal
+            // CORRECCIÓN: Reemplazamos guiones por espacios y quitamos espacios extra
+            // Esto fusiona "code-generation" con "code generation" en una sola opción válida.
             if (m.getMainCapability() != null && !m.getMainCapability().isEmpty()) {
-                uniqueCapabilities.add(m.getMainCapability());
+                uniqueCapabilities.add(m.getMainCapability().replace("-", " ").trim());
             }
-            // Añadir las capacidades secundarias de la lista
+
             if (m.getCapabilities() != null) {
                 for (String cap : m.getCapabilities()) {
                     if (cap != null && !cap.isEmpty()) {
-                        uniqueCapabilities.add(cap);
+                        uniqueCapabilities.add(cap.replace("-", " ").trim());
                     }
                 }
             }
         }
 
-        // Pasamos la lista de capacidades ordenadas a la vista
         models.put("allCapabilities", uniqueCapabilities);
 
-        // Hacemos lo mismo para Providers (TreeSet para ordenar)
+        // Lógica para Providers
         Set<String> uniqueProviders = new TreeSet<>();
         for (Model m : allModels) {
             if (m.getProvider() != null && !m.getProvider().isEmpty()) {
@@ -120,7 +119,11 @@ public class ModelController {
 
         } catch (NotAuthorizedException e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.INFO, "Acceso no autorizado a modelo privado.");
-            return "redirect:/login";
+
+            // CORRECCIÓN: Redirección Inteligente
+            // Pasamos la URL a la que intentaban ir (models/ID) como parámetro returnUrl
+            return "redirect:/login?returnUrl=models/" + id;
+
         } catch (Exception e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error en showDetail", e);
             return "redirect:/models";
