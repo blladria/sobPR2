@@ -1,203 +1,132 @@
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
-<html>
+<html lang="ca">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title>${model.name} - Details</title>
-        <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${model.name} - Detall</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
         <style>
-            /* Estilos para igualar la Figura 2 del PDF */
-            .model-header {
-                display: flex;
-                align-items: flex-start;
-                margin-bottom: 20px;
-                border-bottom: 1px solid #eee;
-                padding-bottom: 20px;
+            body {
+                background-color: #f8f9fa;
             }
-            .model-logo {
-                width: 80px;
-                height: 80px;
-                object-fit: contain;
-                border-radius: 10px;
-                margin-right: 20px;
-                border: 1px solid #ddd;
-                padding: 5px;
-            }
-            .model-title {
-                margin-top: 0;
-                font-weight: bold;
-                font-size: 2.5em;
-                display: flex;
-                align-items: center;
-            }
-            .version-badge {
-                font-size: 0.4em;
-                background-color: #eef;
-                color: #555;
-                border: 1px solid #ccf;
+            .detail-card {
+                background: white;
                 border-radius: 15px;
-                padding: 3px 8px;
-                margin-left: 15px;
-                vertical-align: middle;
-            }
-            .provider-info {
-                color: #777;
-                font-size: 1.1em;
-            }
-            .capability-badge {
-                display: inline-block;
-                border: 1px solid #5bc0de;
-                color: #31708f;
-                background-color: #eef9fd;
-                padding: 5px 15px;
-                border-radius: 20px;
-                margin-right: 5px;
-                margin-bottom: 5px;
-                font-weight: bold;
-            }
-            .spec-table td {
-                padding: 8px 0;
-                font-size: 1.1em;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+                border: none;
             }
             .spec-label {
-                color: #555;
+                font-weight: 600;
+                color: #6c757d;
+                font-size: 0.85rem;
+                text-transform: uppercase;
             }
             .spec-value {
-                text-align: right;
-                font-weight: bold;
-                color: #333;
+                color: #212529;
+                font-weight: 500;
+            }
+            .provider-logo-lg {
+                width: 100px;
+                height: 100px;
+                object-fit: contain;
+                border-radius: 12px;
+            }
+            .capability-pill {
+                background: #e7f1ff;
+                color: #0d6efd;
+                border: 1px solid #cfe2ff;
             }
         </style>
     </head>
     <body>
-        <nav class="navbar navbar-default navbar-static-top">
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
             <div class="container">
-                <div class="navbar-header">
-                    <a class="navbar-brand" href="${pageContext.request.contextPath}/Web/models">
-                        <img src="${pageContext.request.contextPath}/resources/img/ETSEcentrat.png" alt="Logo" height="30" style="display:inline-block;">
-                        Models Catalog
-                    </a>
-                </div>
-                <div id="navbar" class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav navbar-right">
-                        <c:choose>
-                            <c:when test="${not empty sessionScope.user}">
-                                <li><p class="navbar-text">Benvingut <strong>${sessionScope.user.username}</strong>!</p></li>
-                                <li><a href="${pageContext.request.contextPath}/Web/logout">Logout</a></li>
-                            </c:when>
-                            <c:otherwise>
-                                <li><a href="${pageContext.request.contextPath}/Web/login">Login</a></li>
-                                <li><a href="${pageContext.request.contextPath}/Web/SignUp">Sign Up</a></li>
-                            </c:otherwise>
-                        </c:choose>
-                    </ul>
+                <a class="navbar-brand" href="${mvc.basePath}/models">SOB AI Market</a>
+                <div class="ms-auto">
+                    <c:choose>
+                        <c:when test="${not empty sessionScope.user}">
+                            <span class="navbar-text text-white me-3">Usuari: <strong>${sessionScope.user.username}</strong></span>
+                            <a href="${mvc.basePath}/logout" class="btn btn-outline-light btn-sm">Sortir</a>
+                        </c:when>
+                        <c:otherwise>
+                            <a href="${mvc.basePath}/login" class="btn btn-outline-light btn-sm">Entrar</a>
+                        </c:otherwise>
+                    </c:choose>
                 </div>
             </div>
         </nav>
 
-        <div class="container" style="margin-top: 20px;">
-            
-            <a href="${pageContext.request.contextPath}/Web/models" class="btn btn-default" style="margin-bottom: 20px;">&larr; Back to List</a>
+        <div class="container mb-5">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="${mvc.basePath}/models">Models</a></li>
+                    <li class="breadcrumb-item active">${model.name}</li>
+                </ol>
+            </nav>
 
-            <c:if test="${not empty error}">
-                <div class="alert alert-danger">${error}</div>
-            </c:if>
-
-            <c:if test="${not empty model}">
-                <div class="panel panel-default">
-                    <div class="panel-body">
-                        
-                        <div class="model-header">
-                            <c:choose>
-                                <c:when test="${not empty model.logo}">
-                                    <img src="${model.logo}" class="model-logo" alt="Logo">
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="model-logo" style="display:flex;align-items:center;justify-content:center;background:#eee;">No Logo</div>
-                                </c:otherwise>
-                            </c:choose>
-                            
-                            <div>
-                                <h1 class="model-title">
-                                    ${model.name}
-                                    <span class="version-badge">Version: ${model.version}</span>
-                                </h1>
-                                <div class="provider-info">
-                                    ${model.provider} &bull; Last updated ${model.lastUpdated}
-                                </div>
-                            </div>
+            <div class="card detail-card p-4 p-md-5">
+                <div class="row align-items-center mb-5">
+                    <div class="col-md-2 text-center text-md-start">
+                        <img src="${model.logo}" class="provider-logo-lg shadow-sm" onerror="this.src='https://via.placeholder.com/100'">
+                    </div>
+                    <div class="col-md-10 mt-3 mt-md-0">
+                        <div class="d-flex flex-wrap align-items-center gap-3">
+                            <h1 class="display-6 mb-0">${model.name}</h1>
+                            <span class="badge bg-dark">v${model.version}</span>
                         </div>
-
-                        <div class="row">
-                            <div class="col-md-12">
-                                <p style="font-size: 1.1em; line-height: 1.6;">
-                                    ${model.description}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="row" style="margin-top: 15px; margin-bottom: 30px;">
-                            <div class="col-md-12">
-                                <c:forEach items="${model.capabilities}" var="cap">
-                                    <span class="capability-badge">${cap}</span>
-                                </c:forEach>
-                            </div>
-                        </div>
-
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3 class="panel-title" style="font-weight:bold; font-size:1.5em;">Model Specifications</h3>
-                            </div>
-                            <div class="panel-body">
-                                <table class="table" style="margin-bottom: 0;">
-                                    <tbody>
-                                        <tr>
-                                            <td class="spec-label">Context Length</td>
-                                            <td class="spec-value">${model.contextLength}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Quality Index</td>
-                                            <td class="spec-value">${model.qualityIndex}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">License</td>
-                                            <td class="spec-value">${model.license}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Training Data</td>
-                                            <td class="spec-value">${model.trainingDataDate}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Last Updated</td>
-                                            <td class="spec-value">${model.lastUpdated}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Input Type</td>
-                                            <td class="spec-value">${model.inputType}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Output Type</td>
-                                            <td class="spec-value">${model.outputType}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Publisher</td>
-                                            <td class="spec-value">${model.publisher}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="spec-label">Languages</td>
-                                            <td class="spec-value">${model.languages}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
+                        <p class="text-muted lead mt-2">${model.provider} • <small>Actualitzat: ${model.lastUpdated}</small></p>
                     </div>
                 </div>
-            </c:if>
-        </div>
 
-        <%@include file="layout/footer.jsp" %>
+                <div class="row g-5">
+                    <div class="col-lg-8">
+                        <h4 class="mb-3 fw-bold">Descripció del Model</h4>
+                        <p class="text-secondary" style="line-height: 1.8; text-align: justify;">
+                            ${model.description}
+                        </p>
+
+                        <h5 class="mt-5 mb-3 fw-bold">Capacitats</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <c:forEach items="${model.capabilities}" var="cap">
+                                <span class="badge rounded-pill capability-pill px-3 py-2">${cap}</span>
+                            </c:forEach>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="p-4 rounded-4 bg-light border-0">
+                            <h5 class="mb-4 fw-bold">Especificacions</h5>
+                            <div class="d-flex flex-column gap-3">
+                                <div>
+                                    <div class="spec-label">Llicència</div>
+                                    <div class="spec-value">${model.license}</div>
+                                </div>
+                                <div>
+                                    <div class="spec-label">Context Length</div>
+                                    <div class="spec-value">${model.contextLength} tokens</div>
+                                </div>
+                                <div>
+                                    <div class="spec-label">Quality Index</div>
+                                    <div class="spec-value">${model.qualityIndex}/100</div>
+                                </div>
+                                <div>
+                                    <div class="spec-label">Entrenat fins a</div>
+                                    <div class="spec-value">${model.trainingDataDate}</div>
+                                </div>
+                                <div>
+                                    <div class="spec-label">Input / Output</div>
+                                    <div class="spec-value">${model.inputType} ➔ ${model.outputType}</div>
+                                </div>
+                            </div>
+                            <hr>
+                            <a href="${mvc.basePath}/models" class="btn btn-outline-secondary w-100">Tornar al llistat</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
 </html>
