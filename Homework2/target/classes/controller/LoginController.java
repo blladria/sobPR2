@@ -9,7 +9,8 @@ import jakarta.mvc.View;
 import jakarta.mvc.binding.BindingResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import jakarta.ws.rs.FormParam;
+import jakarta.validation.Valid; // Importación necesaria para la validación
+import jakarta.ws.rs.BeanParam; // Importación necesaria para usar LoginForm
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -45,36 +46,52 @@ public class LoginController {
     }
 
     @POST
-    public String login(@FormParam("username") String username,
-            @FormParam("password") String password,
-            @FormParam("returnUrl") String returnUrl) {
+    public String login(@Valid @BeanParam LoginForm form) {
+        // USO DE LoginForm: Ahora recibimos todos los datos agrupados y validados.
 
-        // CORRECCIÓN ANTERIOR: Usamos validateUser que devuelve un User o null
-        User user = service.validateUser(username, password);
+        // 1. Comprobar errores de validación (Campos vacíos, etc.)
+        if (bindingResult.isFailed()) {
+            // Obtenemos el primer mensaje de error para mostrarlo en la alerta del JSP
+            String errorMessage = bindingResult.getAllErrors().stream()
+                                    .map(e -> e.getMessage())
+                                    .findFirst()
+                                    .orElse("Error en los datos del formulario.");
+            
+            models.put("error", errorMessage);
+            models.put("username", form.getUsername()); // Mantener el usuario escrito
+            
+            if (form.getReturnUrl() != null && !form.getReturnUrl().isEmpty()) {
+                models.put("returnUrl", form.getReturnUrl());
+            }
+            return "login.jsp";
+        }
+
+        // 2. Intentar validar credenciales con el servicio
+        User user = service.validateUser(form.getUsername(), form.getPassword());
 
         if (user != null) {
             // LOGIN CORRECTO
 
-            // 1. Guardamos el usuario en la sesión actual
+            // Guardamos el usuario en la sesión actual
             HttpSession session = request.getSession(true);
             session.setAttribute("user", user);
 
-            // 2. Redirección inteligente
+            // Redirección inteligente
+            String returnUrl = form.getReturnUrl();
             if (returnUrl != null && !returnUrl.trim().isEmpty() && returnUrl.startsWith("/")) {
-                // Si la returnUrl viene de ModelController, ya traerá el /Web incluido gracias al cambio anterior
                 return "redirect:" + returnUrl;
             }
 
-            // CAMBIO: La redirección por defecto también necesita el prefijo /Web
+            // Redirección por defecto a la lista de modelos
             return "redirect:models";
 
         } else {
-            // LOGIN FALLIDO
+            // LOGIN FALLIDO (Credenciales incorrectas)
             models.put("error", "Usuario o contraseña incorrectos.");
-            models.put("username", username);
+            models.put("username", form.getUsername());
 
-            if (returnUrl != null && !returnUrl.isEmpty()) {
-                models.put("returnUrl", returnUrl);
+            if (form.getReturnUrl() != null && !form.getReturnUrl().isEmpty()) {
+                models.put("returnUrl", form.getReturnUrl());
             }
             return "login.jsp";
         }
