@@ -69,10 +69,11 @@
                         <label for="provider">Provider:</label>
                         <select name="provider" class="form-control">
                             <option value="">All Providers</option>
-                            <option value="OpenAI" ${param.provider == 'OpenAI' ? 'selected' : ''}>OpenAI</option>
-                            <option value="Anthropic" ${param.provider == 'Anthropic' ? 'selected' : ''}>Anthropic</option>
-                            <option value="Google" ${param.provider == 'Google' ? 'selected' : ''}>Google</option>
-                            <option value="Meta" ${param.provider == 'Meta' ? 'selected' : ''}>Meta</option>
+                            <c:forEach items="${allProviders}" var="prov">
+                                <option value="${prov}" ${param.provider == prov ? 'selected' : ''}>
+                                    ${prov}
+                                </option>
+                            </c:forEach>
                         </select>
                     </div>
 
@@ -81,9 +82,11 @@
                         <select name="capability" class="form-control">
                             <option value="">All Capabilities</option>
 
-                            <option value="Chat Completion" ${param.capability == 'Chat Completion' ? 'selected' : ''}>Chat Completion</option>
-                            <option value="Image Generation" ${param.capability == 'Image Generation' ? 'selected' : ''}>Image Generation</option>
-                            <option value="Code Generation" ${param.capability == 'Code Generation' ? 'selected' : ''}>Code Generation</option>
+                            <c:forEach items="${allCapabilities}" var="cap">
+                                <option value="${cap}" ${param.capability == cap ? 'selected' : ''}>
+                                    ${cap}
+                                </option>
+                            </c:forEach>
 
                         </select>
                     </div>

@@ -22,6 +22,9 @@ import jakarta.ws.rs.QueryParam;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.ArrayList; // Por si acaso
 
 @Controller
 @Path("models")
@@ -39,8 +42,45 @@ public class ModelController {
     @GET
     public String listModels(@QueryParam("capability") List<String> capabilities,
             @QueryParam("provider") String provider) {
+
+        // 1. Obtener la lista filtrada para MOSTRAR los modelos (lógica actual)
         List<Model> list = modelService.findAll(capabilities, provider);
         models.put("modelList", list);
+
+        // 2. NUEVO: Obtener TODOS los modelos para generar el FILTRO
+        // Llamamos a findAll(null, null) para traer todo sin filtrar
+        List<Model> allModels = modelService.findAll(null, null);
+
+        // Usamos un Set para almacenar capacidades únicas (evita duplicados)
+        Set<String> uniqueCapabilities = new HashSet<>();
+
+        for (Model m : allModels) {
+            // Añadir la capacidad principal
+            if (m.getMainCapability() != null && !m.getMainCapability().isEmpty()) {
+                uniqueCapabilities.add(m.getMainCapability());
+            }
+            // Opcional: Si quieres que también aparezcan las capacidades de la lista interna
+            if (m.getCapabilities() != null) {
+                for (String cap : m.getCapabilities()) {
+                    if (cap != null && !cap.isEmpty()) {
+                        uniqueCapabilities.add(cap);
+                    }
+                }
+            }
+        }
+
+        // Pasamos la lista de capacidades únicas a la vista
+        models.put("allCapabilities", uniqueCapabilities);
+
+        // (Opcional) Hacer lo mismo para "Providers" si quisieras que también fuera dinámico
+        Set<String> uniqueProviders = new HashSet<>();
+        for (Model m : allModels) {
+            if (m.getProvider() != null && !m.getProvider().isEmpty()) {
+                uniqueProviders.add(m.getProvider());
+            }
+        }
+        models.put("allProviders", uniqueProviders);
+
         return "model-list.jsp";
     }
 
