@@ -1,9 +1,3 @@
-<%-- 
-    Document   : model-list
-    Created on : 2 ene 2026, 13:58:57
-    Author     : bllad
---%>
-
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
@@ -34,6 +28,10 @@
                 right: 10px;
                 color: #dc3545;
                 font-size: 1.2rem;
+                z-index: 100; /* Asegura que el candado quede encima de todo */
+                background: rgba(255,255,255,0.7); /* Un pequeño fondo para que resalte */
+                border-radius: 50%;
+                padding: 5px;
             }
         </style>
     </head>
@@ -52,12 +50,12 @@
                             <c:when test="${not empty sessionScope.user}">
                                 <li><p class="navbar-text">Benvingut <strong>${sessionScope.user.username}</strong>!</p></li>
                                 <li><a href="${pageContext.request.contextPath}/Web/logout">Logout</a></li>
-                            </c:when>
-                            <c:otherwise>
+                                </c:when>
+                                <c:otherwise>
                                 <li><a href="${pageContext.request.contextPath}/Web/login">Login</a></li>
                                 <li><a href="${pageContext.request.contextPath}/Web/SignUp">Sign Up</a></li>
-                            </c:otherwise>
-                        </c:choose>
+                                </c:otherwise>
+                            </c:choose>
                     </ul>
                 </div>
             </div>
@@ -66,30 +64,28 @@
         <div class="container">
             <div class="well">
                 <form action="${pageContext.request.contextPath}/Web/models" method="GET" class="form-inline">
+
                     <div class="form-group">
                         <label for="provider">Provider:</label>
                         <select name="provider" class="form-control">
                             <option value="">All Providers</option>
-                            <option value="OpenAI" ${selectedProvider == 'OpenAI' ? 'selected' : ''}>OpenAI</option>
-                            <option value="Anthropic" ${selectedProvider == 'Anthropic' ? 'selected' : ''}>Anthropic</option>
-                            <option value="Google" ${selectedProvider == 'Google' ? 'selected' : ''}>Google</option>
-                            <option value="Meta" ${selectedProvider == 'Meta' ? 'selected' : ''}>Meta</option>
+                            <option value="OpenAI" ${param.provider == 'OpenAI' ? 'selected' : ''}>OpenAI</option>
+                            <option value="Anthropic" ${param.provider == 'Anthropic' ? 'selected' : ''}>Anthropic</option>
+                            <option value="Google" ${param.provider == 'Google' ? 'selected' : ''}>Google</option>
+                            <option value="Meta" ${param.provider == 'Meta' ? 'selected' : ''}>Meta</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group" style="margin-left: 15px;">
-                        <label>Capabilities:</label>
-                        <label class="checkbox-inline">
-                            <input type="checkbox" name="capability" value="chat-completion"> Chat
-                        </label>
-                        <label class="checkbox-inline">
-                            <input type="checkbox" name="capability" value="image-generation"> Image
-                        </label>
-                        <label class="checkbox-inline">
-                            <input type="checkbox" name="capability" value="code-generation"> Code
-                        </label>
+                        <label for="capability">Capability:</label>
+                        <select name="capability" class="form-control">
+                            <option value="">All Capabilities</option>
+                            <option value="chat-completion" ${param.capability == 'chat-completion' ? 'selected' : ''}>Chat Completion</option>
+                            <option value="image-generation" ${param.capability == 'image-generation' ? 'selected' : ''}>Image Generation</option>
+                            <option value="code-generation" ${param.capability == 'code-generation' ? 'selected' : ''}>Code Generation</option>
+                        </select>
                     </div>
-                    
+
                     <button type="submit" class="btn btn-primary pull-right">Filter</button>
                 </form>
             </div>
@@ -99,10 +95,11 @@
                     <div class="col-md-4 col-sm-6" style="margin-bottom: 20px;">
                         <div class="card panel panel-default">
                             <div class="panel-body" style="position: relative;">
+
                                 <c:if test="${model.isPrivate()}">
                                     <span class="glyphicon glyphicon-lock private-icon" title="Private Model"></span>
                                 </c:if>
-                                
+
                                 <div class="text-center">
                                     <c:choose>
                                         <c:when test="${not empty model.logo}">
@@ -113,10 +110,11 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </div>
-                                
+
                                 <hr>
+
                                 <h4>
-                                    <a href="${pageContext.request.contextPath}/Web/models/detail?id=${model.id}">
+                                    <a href="${pageContext.request.contextPath}/Web/models/${model.id}">
                                         ${model.name}
                                     </a>
                                 </h4>
@@ -129,7 +127,7 @@
                         </div>
                     </div>
                 </c:forEach>
-                
+
                 <c:if test="${empty modelList}">
                     <div class="alert alert-warning">
                         No models found matching your criteria.
