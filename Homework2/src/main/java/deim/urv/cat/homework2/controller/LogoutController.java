@@ -12,7 +12,7 @@ import java.util.Enumeration;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@Path("Logout")
+@Path("logout") // CAMBIO 1: Minúscula para cumplir estándares web
 @Controller
 public class LogoutController {
     @Inject Logger log;
@@ -23,17 +23,24 @@ public class LogoutController {
     @GET
     public String invalidate() {
         // Invalidate HTTP Session
-        HttpSession session = request.getSession();
+        // CAMBIO 2: false para no crear sesión si no existe
+        HttpSession session = request.getSession(false); 
         
-        Enumeration<String> attributes = request.getSession().getAttributeNames();
-        while (attributes.hasMoreElements()) {
-            String key = attributes.nextElement();
-            Object obj  = session.getAttribute(key);
-            log.log(Level.INFO, "Session attribute {0}:{1}", 
-                    new Object [] { key, obj });
+        if (session != null) {
+            Enumeration<String> attributes = session.getAttributeNames();
+            while (attributes.hasMoreElements()) {
+                String key = attributes.nextElement();
+                Object obj  = session.getAttribute(key);
+                log.log(Level.INFO, "Session attribute {0}:{1}", 
+                        new Object [] { key, obj });
+            }
+            session.invalidate();
         }
-        session.invalidate();
-        return "redirect:/SignUp"; 
+        
+        // CAMBIO 3 (SOLUCIÓN 404): 
+        // Usamos "redirect:login" (sin barra / inicial).
+        // Esto hace que la redirección sea relativa al path actual (/Web/),
+        // llevando a /Web/login en lugar de intentar ir a la raíz incorrecta.
+        return "redirect:login"; 
     }    
-    
 }

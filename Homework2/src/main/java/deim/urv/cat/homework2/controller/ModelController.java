@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -35,8 +37,6 @@ public class ModelController {
     public String showModels(
             @QueryParam("capability") List<String> capabilities,
             @QueryParam("provider") String provider) {
-        // ... (Tu código existente showModels aquí) ...
-        // [Mantenlo igual que en tu fichero original]
         try {
             List<Model> list = service.findAll(capabilities, provider);
             if (list == null) list = new ArrayList<>();
@@ -51,7 +51,7 @@ public class ModelController {
         return "model-list.jsp";
     }
 
-    // --- NUEVO MÉTODO PARA EL DETALLE ---
+    // --- NUEVO MÉTODO PARA EL DETALLE CON REDIRECCIÓN INTELIGENTE ---
     @GET
     @Path("detail")
     @UriRef("detail")
@@ -61,28 +61,43 @@ public class ModelController {
             HttpSession session = request.getSession(false);
             String username = null;
             String password = null;
+            boolean isLoggedIn = false;
 
             if (session != null && session.getAttribute("user") != null) {
                 User user = (User) session.getAttribute("user");
                 username = user.getUsername();
-                password = user.getPassword(); // Necesitamos la password en texto plano para Basic Auth
+                password = user.getPassword(); 
+                isLoggedIn = true;
             }
 
             // 2. Llamar al servicio pasando credenciales
             Model model = service.find(id, username, password);
 
-            // 3. Pasar el modelo a la vista
+            // 3. Lógica de Redirección
             if (model != null) {
+                // Modelo encontrado y accesible
                 models.put("model", model);
                 return "model-detail.jsp";
             } else {
-                // Si es privado y no hay login, o no existe, el servicio devuelve null
+                // El modelo es null. Puede ser que no exista O que sea privado y no estemos autorizados.
+                // Si NO estamos logueados, asumimos que puede ser privado y redirigimos al login.
+                if (!isLoggedIn) {
+                    // Construimos la URL a la que queremos volver: models/detail?id=X
+                    String returnUrl = "models/detail?id=" + id;
+                    String encodedUrl = URLEncoder.encode(returnUrl, StandardCharsets.UTF_8.toString());
+                    
+                    // Redirigimos al Login pasando esta URL
+                    // Nota: redirect:/login asume que login está en /Web/login
+                    return "redirect:/login?returnUrl=" + encodedUrl;
+                }
+                
+                // Si ya estamos logueados y sigue siendo null, es un error real (404 o sin permiso real)
                 models.put("error", "Model not found or access denied.");
-                return "model-list.jsp"; // O una página de error
+                return "model-list.jsp"; 
             }
         } catch (Exception e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error retrieving model detail", e);
-            return "error.jsp"; // Asegúrate de tener una página de error o redirigir
+            return "error.jsp"; 
         }
     }
 }
