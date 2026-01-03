@@ -52,7 +52,8 @@ public class ModelController {
     @Path("detail")
     public String showModelDetail(@QueryParam("id") Long id) {
         if (id == null) {
-            return "redirect:/models";
+            // CAMBIO: Añadido /Web para que la redirección encuentre la ruta correcta
+            return "redirect:/Web/models";
         }
 
         // Obtenemos usuario de sesión para intentar acceder con credenciales si las hay
@@ -63,19 +64,23 @@ public class ModelController {
         String password = (user != null) ? user.getPassword() : null;
 
         try {
-            // CORRECCIÓN ERROR 2: El servicio usa 'find' con 3 argumentos
+            // CORRECCIÓN ANTERIOR: El servicio usa 'find' con 3 argumentos
             Model model = modelService.find(id, username, password);
 
             if (model == null) {
-                return "redirect:/models";
+                // CAMBIO: Añadido /Web
+                return "redirect:/Web/models";
             }
 
-            // CORRECCIÓN ERROR 1: El getter es isPrivate()
+            // CORRECCIÓN ANTERIOR: El getter es isPrivate()
             if (model.isPrivate()) {
 
                 // Si es privado y NO estamos logueados, redirigimos al login
                 if (user == null) {
-                    String currentUrl = "/models/detail?id=" + id;
+                    // CAMBIO CRÍTICO: Se añade "/Web" a la URL de retorno.
+                    // Sin esto, al hacer login exitoso, redirige a una página 404.
+                    String currentUrl = "/Web/models/detail?id=" + id;
+
                     // 'returnUrl' debe coincidir con lo que espera LoginController
                     return "redirect:/login?returnUrl=" + currentUrl;
                 }
@@ -85,9 +90,11 @@ public class ModelController {
             return "model-detail.jsp";
 
         } catch (Exception e) {
-            // Si el servicio falla (por ejemplo, 403 Forbidden porque no pasamos credenciales)
+            // Si el servicio falla (por ejemplo, 403 Forbidden)
             // asumimos que hace falta login y redirigimos.
-            String currentUrl = "/models/detail?id=" + id;
+
+            // CAMBIO CRÍTICO: Se añade "/Web" aquí también
+            String currentUrl = "/Web/models/detail?id=" + id;
             return "redirect:/login?returnUrl=" + currentUrl;
         }
     }

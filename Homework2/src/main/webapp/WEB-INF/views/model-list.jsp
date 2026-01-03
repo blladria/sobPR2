@@ -63,7 +63,7 @@
                             <h3 class="panel-title"><i class="glyphicon glyphicon-filter"></i> Filters</h3>
                         </div>
                         <div class="panel-body">
-                            <form action="${pageContext.request.contextPath}/models" method="GET">
+                            <form action="${pageContext.request.contextPath}/Web/models" method="GET">
 
                                 <div class="form-group">
                                     <label for="capability">Capability</label>
@@ -88,7 +88,7 @@
                                 <button type="submit" class="btn btn-primary btn-block">
                                     Apply Filters
                                 </button>
-                                <a href="${pageContext.request.contextPath}/models" class="btn btn-default btn-block">Clear</a>
+                                <a href="${pageContext.request.contextPath}/Web/models" class="btn btn-default btn-block">Clear</a>
                             </form>
                         </div>
                     </div>
@@ -131,7 +131,7 @@
                                         </div>
                                     </div>
                                     <div class="card-footer bg-white text-center">
-                                        <a href="${pageContext.request.contextPath}/models/detail?id=${model.id}" class="btn btn-primary btn-sm btn-block">View Details</a>
+                                        <a href="${pageContext.request.contextPath}/Web/models/detail?id=${model.id}" class="btn btn-primary btn-sm btn-block">View Details</a>
                                     </div>
                                 </div>
                             </div>

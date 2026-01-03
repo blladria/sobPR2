@@ -35,7 +35,7 @@
                                 <div class="alert alert-danger">${error}</div>
                             </c:if>
 
-                            <form method="POST" action="${pageContext.request.contextPath}/mvc/login">
+                            <form method="POST" action="${pageContext.request.contextPath}/Web/login">
 
                                 <c:if test="${not empty returnUrl}">
                                     <input type="hidden" name="returnUrl" value="${returnUrl}" />
@@ -57,7 +57,7 @@
                             </form>
                         </div>
                         <div class="panel-footer text-center">
-                            Don't have an account? <a href="${pageContext.request.contextPath}/mvc/signup">Sign up</a>
+                            Don't have an account? <a href="${pageContext.request.contextPath}/Web/signup">Sign up</a>
                         </div>
                     </div>
                 </div>

@@ -49,7 +49,7 @@ public class LoginController {
             @FormParam("password") String password,
             @FormParam("returnUrl") String returnUrl) {
 
-        // CORRECCIÓN: Usamos validateUser que devuelve un User o null
+        // CORRECCIÓN ANTERIOR: Usamos validateUser que devuelve un User o null
         User user = service.validateUser(username, password);
 
         if (user != null) {
@@ -57,13 +57,16 @@ public class LoginController {
 
             // 1. Guardamos el usuario en la sesión actual
             HttpSession session = request.getSession(true);
-            session.setAttribute("user", user); // 'user' es el objeto que devuelve validateUser
+            session.setAttribute("user", user);
 
             // 2. Redirección inteligente
             if (returnUrl != null && !returnUrl.trim().isEmpty() && returnUrl.startsWith("/")) {
+                // Si la returnUrl viene de ModelController, ya traerá el /Web incluido gracias al cambio anterior
                 return "redirect:" + returnUrl;
             }
-            return "redirect:/models";
+
+            // CAMBIO: La redirección por defecto también necesita el prefijo /Web
+            return "redirect:models";
 
         } else {
             // LOGIN FALLIDO
