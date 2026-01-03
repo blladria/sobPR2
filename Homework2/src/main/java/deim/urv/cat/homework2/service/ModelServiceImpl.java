@@ -45,17 +45,25 @@ public class ModelServiceImpl implements ModelService {
         try {
             WebTarget target = webTarget;
 
-            // 1. Aplicar Filtro Provider
-            if (provider != null && !provider.isEmpty()) {
+            // 1. Aplicar Filtro Provider (Solo si no es null ni vacío)
+            if (provider != null && !provider.trim().isEmpty()) {
                 target = target.queryParam("provider", provider);
             }
 
-            // 2. Aplicar Filtro Capabilities
+            // 2. Aplicar Filtro Capabilities (CORREGIDO)
             if (capabilities != null && !capabilities.isEmpty()) {
                 for (String cap : capabilities) {
-                    target = target.queryParam("capability", cap);
+                    // --- CORRECCIÓN AQUÍ ---
+                    // El formulario envía cadenas vacías ("") si se selecciona "All Capabilities".
+                    // Debemos ignorarlas para no romper la query en el backend.
+                    if (cap != null && !cap.trim().isEmpty()) {
+                        target = target.queryParam("capability", cap);
+                    }
                 }
             }
+
+            // LOG PARA DIAGNÓSTICO: Ver qué URL estamos llamando realmente
+            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.INFO, "Llamando al Backend: {0}", target.getUri());
 
             // 3. Hacer la petición GET
             Response response = target.request(MediaType.APPLICATION_JSON).get();
