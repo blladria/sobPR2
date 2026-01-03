@@ -44,44 +44,45 @@ public class ModelController {
             @QueryParam("provider") String provider) {
 
         // 0. Preparar el filtro
+        // Recibimos un String del formulario, pero el servicio espera una Lista.
         List<String> capabilities = new ArrayList<>();
         if (capability != null && !capability.trim().isEmpty()) {
             capabilities.add(capability);
         }
 
-        // 1. Obtener la lista filtrada para MOSTRAR
+        // 1. Obtener la lista filtrada para MOSTRAR los modelos
         List<Model> list = modelService.findAll(capabilities, provider);
         models.put("modelList", list);
 
-        // 2. Obtener TODOS los modelos para los DESPLEGABLES
+        // 2. Obtener TODOS los modelos para generar los desplegables (Filtros)
         List<Model> allModels = modelService.findAll(null, null);
 
-        // Usamos TreeSet para ordenar y evitar duplicados
+        // --- GESTIÓN DE CAPABILITIES (Solución de duplicados y formato) ---
+        // Usamos TreeSet para que salgan ordenados y sin repetidos
         Set<String> uniqueCapabilities = new TreeSet<>();
 
         for (Model m : allModels) {
-            // CORRECCIÓN: Reemplazamos guiones por espacios y quitamos espacios extra
-            // Esto fusiona "code-generation" con "code generation" en una sola opción válida.
+            // Capacidad principal
             if (m.getMainCapability() != null && !m.getMainCapability().isEmpty()) {
-                uniqueCapabilities.add(m.getMainCapability().replace("-", " ").trim());
+                // APLICAMOS FORMATEO: Quita guiones y pone Mayúsculas (Title Case)
+                uniqueCapabilities.add(formatText(m.getMainCapability()));
             }
-
+            // Lista de capacidades secundarias
             if (m.getCapabilities() != null) {
                 for (String cap : m.getCapabilities()) {
                     if (cap != null && !cap.isEmpty()) {
-                        uniqueCapabilities.add(cap.replace("-", " ").trim());
+                        uniqueCapabilities.add(formatText(cap));
                     }
                 }
             }
         }
-
         models.put("allCapabilities", uniqueCapabilities);
 
-        // Lógica para Providers
+        // --- GESTIÓN DE PROVIDERS ---
         Set<String> uniqueProviders = new TreeSet<>();
         for (Model m : allModels) {
             if (m.getProvider() != null && !m.getProvider().isEmpty()) {
-                uniqueProviders.add(m.getProvider());
+                uniqueProviders.add(m.getProvider()); // Asumimos que el provider ya viene bien formateado
             }
         }
         models.put("allProviders", uniqueProviders);
@@ -119,14 +120,41 @@ public class ModelController {
 
         } catch (NotAuthorizedException e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.INFO, "Acceso no autorizado a modelo privado.");
-
-            // CORRECCIÓN: Redirección Inteligente
-            // Pasamos la URL a la que intentaban ir (models/ID) como parámetro returnUrl
+            // Redirección inteligente: volvemos a intentar ir a models/ID tras loguearnos
             return "redirect:/login?returnUrl=models/" + id;
-
         } catch (Exception e) {
             Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error en showDetail", e);
             return "redirect:/models";
         }
+    }
+
+    /**
+     * Método auxiliar para limpiar y estandarizar los textos. Convierte
+     * "code-generation" o "code generation" -> "Code Generation".
+     */
+    private String formatText(String input) {
+        if (input == null) {
+            return "";
+        }
+
+        // 1. Reemplazar guiones por espacios
+        String text = input.replace("-", " ");
+
+        // 2. Convertir a "Title Case" (Primera letra de cada palabra en mayúscula)
+        StringBuilder result = new StringBuilder();
+        String[] words = text.split("\\s+");
+
+        for (String word : words) {
+            if (!word.isEmpty()) {
+                if (result.length() > 0) {
+                    result.append(" ");
+                }
+                // Primera letra mayúscula, resto minúscula
+                result.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1).toLowerCase());
+            }
+        }
+
+        return result.toString();
     }
 }
