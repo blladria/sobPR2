@@ -7,7 +7,7 @@ package deim.urv.cat.homework2.controller;
 import deim.urv.cat.homework2.model.Model;
 import deim.urv.cat.homework2.model.User;
 import deim.urv.cat.homework2.service.ModelService;
-import deim.urv.cat.homework2.service.UserService; // Necesario castear a Impl si no está en interfaz
+import deim.urv.cat.homework2.service.UserService;
 import deim.urv.cat.homework2.service.UserServiceImpl;
 
 import jakarta.inject.Inject;
@@ -15,10 +15,13 @@ import jakarta.mvc.Controller;
 import jakarta.mvc.Models;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 @Controller
 @Path("models")
@@ -29,7 +32,7 @@ public class ModelController {
     @Inject
     ModelService modelService;
     @Inject
-    UserService userService; // Inyectamos servicio de usuario
+    UserService userService;
     @Inject
     HttpSession session;
 
@@ -44,7 +47,7 @@ public class ModelController {
     @GET
     @Path("{id}")
     public String showDetail(@PathParam("id") Long id) {
-        // 1. Obtener credenciales si existen
+        // 1. Obtener credenciales si existen en sesión
         User currentUser = (User) session.getAttribute("user");
         String username = null;
         String password = null;
@@ -54,23 +57,34 @@ public class ModelController {
             password = currentUser.getPassword();
         }
 
-        // 2. Buscar el modelo
-        Model model = modelService.find(id, username, password);
+        try {
+            // 2. Intentar buscar el modelo. 
+            // Si es privado y no estamos logueados (o credenciales mal), lanzará NotAuthorizedException
+            Model model = modelService.find(id, username, password);
 
-        if (model != null) {
-            models.put("model", model);
+            if (model != null) {
+                models.put("model", model);
 
-            // 3. ACTUALIZAR 'lastConsultedModelId' SI EL USUARIO ESTÁ LOGUEADO
-            if (currentUser != null) {
-                currentUser.setLastConsultedModelId(id);
-                // Llamamos al servicio para hacer el PUT al backend
-                // Hacemos cast porque añadimos el método en la implementación (idealmente añadir a la interfaz)
-                if (userService instanceof UserServiceImpl) {
-                    ((UserServiceImpl) userService).updateUser(currentUser, password);
+                // 3. ACTUALIZAR 'lastConsultedModelId' SI EL USUARIO ESTÁ LOGUEADO
+                if (currentUser != null) {
+                    currentUser.setLastConsultedModelId(id);
+                    // Actualizamos en backend
+                    if (userService instanceof UserServiceImpl) {
+                        ((UserServiceImpl) userService).updateUser(currentUser, password);
+                    }
                 }
+                return "model-detail.jsp";
+            } else {
+                // Si devuelve null (ej. 404 Not Found), volvemos al listado
+                return "redirect:/models";
             }
-            return "model-detail.jsp";
-        } else {
+
+        } catch (NotAuthorizedException e) {
+            // REQUISITO CUMPLIDO: Si es privado y no autorizado, redirigir al login
+            Logger.getLogger(ModelController.class.getName()).log(Level.INFO, "Acceso no autorizado a modelo privado. Redirigiendo a Login.");
+            return "redirect:/login";
+        } catch (Exception e) {
+            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error inesperado en showDetail", e);
             return "redirect:/models";
         }
     }
