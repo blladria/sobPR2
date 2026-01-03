@@ -1,67 +1,126 @@
+<%@ page language="java" contentType="text/html; charset=ISO-8859-1" pageEncoding="ISO-8859-1"%>
 <%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%-- SOLUCIÓN ERROR 500: Eliminada la taglib 'mvc' que no se usaba y rompía la compilación --%>
-
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Sign Up - AI Catalog</title>
-        <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
-    </head>
-    <body>
-        <%@include file="layout/navbar.jsp" %>
+<head>
+    <title>Sign Up</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" />
+    <script src="<c:url value="/resources/js/jquery-1.11.1.min.js" />"></script>
+    <script src="<c:url value="/resources/js/bootstrap.min.js" />"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"/>
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-static-top">
+        <div class="container">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="${pageContext.request.contextPath}/Web/models">
+                    <img src="${pageContext.request.contextPath}/resources/img/ETSEcentrat.png" alt="Logo" height="30" style="display:inline-block;">
+                    Models Catalog
+                </a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="${pageContext.request.contextPath}/Web/login">Login</a></li>
+                    <li class="active"><a href="${pageContext.request.contextPath}/Web/SignUp">Sign Up</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container">
+        <div class="col-md-offset-2 col-md-7">
+            <h2 class="text-center">Homework 2 - Registro</h2>
+            <div class="panel panel-info">
+                <div class="panel-heading">
+                    <div class="panel-title">Sign Up</div>
+                </div>
+                <div class="panel-body">
+                    
+                    <form action="${pageContext.request.contextPath}/Web/SignUp" method="POST" class="form-horizontal" role="form">
+                        <input type="hidden" name="${mvc.csrf.name}" value="${mvc.csrf.token}"/>
 
-        <div class="container mt-5">
-            <div class="row justify-content-center">
-                <div class="col-md-6">
-                    <div class="card shadow">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="mb-0">Sign Up</h4>
+                        <div class="form-group">
+                            <label for="username" class="col-md-3 control-label">Username</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="username" placeholder="Choose a username" value="${user.username}">
+                                <c:if test="${not empty bindingResult.getErrors('username')}">
+                                    <div class="text-danger">
+                                        <c:forEach var="error" items="${bindingResult.getErrors('username')}">
+                                            ${error.message}<br/>
+                                        </c:forEach>
+                                    </div>
+                                </c:if>
+                            </div>
                         </div>
-                        <div class="card-body">
 
-                            <%-- Mensajes de error --%>
-                            <c:if test="${not empty globalError}">
-                                <div class="alert alert-danger">${globalError}</div>
-                            </c:if>
-                            <c:if test="${not empty errors}">
-                                <div class="alert alert-warning">
-                                    <ul>
-                                        <c:forEach var="error" items="${errors}">
-                                            <li>${error.message}</li>
-                                            </c:forEach>
-                                    </ul>
-                                </div>
-                            </c:if>
-
-                            <form action="${pageContext.request.contextPath}/Web/SignUp" method="post">
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Username</label>
-                                    <input type="text" class="form-control" id="username" name="username" value="${userForm.username}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Full Name</label>
-                                    <input type="text" class="form-control" id="name" name="name" value="${userForm.name}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" value="${userForm.email}" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="password" class="form-label">Password</label>
-                                    <input type="password" class="form-control" id="password" name="password" required>
-                                </div>
-
-                                <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary">Create Account</button>
-                                    <a href="${pageContext.request.contextPath}/Web/models" class="btn btn-secondary">Back to Home</a>
-                                </div>
-                            </form>
+                        <div class="form-group">
+                            <label for="password" class="col-md-3 control-label">Password</label>
+                            <div class="col-md-9">
+                                <input type="password" class="form-control" name="password" placeholder="Password">
+                                <c:if test="${not empty bindingResult.getErrors('password')}">
+                                    <div class="text-danger">
+                                        <c:forEach var="error" items="${bindingResult.getErrors('password')}">
+                                            ${error.message}<br/>
+                                        </c:forEach>
+                                    </div>
+                                </c:if>
+                            </div>
                         </div>
-                    </div>
+
+                        <div class="form-group">
+                            <label for="name" class="col-md-3 control-label">Full Name</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="name" placeholder="First and Last Name" value="${user.name}">
+                                <c:if test="${not empty bindingResult.getErrors('name')}">
+                                    <div class="text-danger">
+                                        <c:forEach var="error" items="${bindingResult.getErrors('name')}">
+                                            ${error.message}<br/>
+                                        </c:forEach>
+                                    </div>
+                                </c:if>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email" class="col-md-3 control-label">Email</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control" name="email" placeholder="Email Address" value="${user.email}">
+                                <c:if test="${not empty bindingResult.getErrors('email')}">
+                                    <div class="text-danger">
+                                        <c:forEach var="error" items="${bindingResult.getErrors('email')}">
+                                            ${error.message}<br/>
+                                        </c:forEach>
+                                    </div>
+                                </c:if>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="col-md-offset-3 col-md-9">
+                                <button type="submit" class="btn btn-info"><i class="fa fa-user-plus"></i> Sign Up</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <c:if test="${not empty message}">
+                         <div class="alert alert-danger">
+                             ${message}
+                         </div>
+                    </c:if>
+
+                    <c:if test="${attempts.hasExceededMaxAttempts()}">
+                        <div class="alert alert-danger text-center">
+                            <img class="mb-4" src="<c:url value="/resources/img/Invalid.png" />" alt="" width="50" />
+                            <br/>
+                            <strong>Too many attempts!</strong> Please try again later.
+                        </div>
+                    </c:if>
+                    
+                    <jsp:include page="/WEB-INF/views/layout/alert.jsp" />
                 </div>
             </div>
         </div>
-
-        <%@include file="layout/footer.jsp" %>
-    </body>
+    </div>
+    <jsp:include page="/WEB-INF/views/layout/footer.jsp" />
+</body>
 </html>

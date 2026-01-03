@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package deim.urv.cat.homework2.model;
 
 import jakarta.json.bind.annotation.JsonbProperty;
@@ -10,15 +14,15 @@ public class Model implements Serializable {
 
     private Long id;
     private String name;
-    private String provider;
-    private String logo;
+    private String provider; 
+    private String logo; 
     private String mainCapability;
     private String summary;
     private String version;
     private String description;
     private List<String> capabilities;
-
-    // Campos adicionales
+    
+    // Campos de especificación
     private String license;
     private Integer contextLength;
     private Double qualityIndex;
@@ -28,22 +32,18 @@ public class Model implements Serializable {
     private String outputType;
     private String publisher;
     private String languages;
-
+    
+    // Control de privacidad
+    // Mapea tanto si el JSON trae "private":true como "isPrivate":true
     @JsonbProperty("private")
     private boolean isPrivate;
 
+    // CONSTRUCTOR VACÍO (Obligatorio para JAX-RS)
     public Model() {
     }
 
-    public Model(String name, String provider, String mainCapability, String description, String logo) {
-        this.name = name;
-        this.provider = provider;
-        this.mainCapability = mainCapability;
-        this.description = description;
-        this.logo = logo;
-    }
+    // Getters y Setters
 
-    // --- GETTERS Y SETTERS ---
     public Long getId() {
         return id;
     }
@@ -82,11 +82,6 @@ public class Model implements Serializable {
 
     public void setMainCapability(String mainCapability) {
         this.mainCapability = mainCapability;
-    }
-
-    // Método auxiliar para el JSP: ${model.capability}
-    public String getCapability() {
-        return getMainCapability();
     }
 
     public String getSummary() {
@@ -193,14 +188,17 @@ public class Model implements Serializable {
         this.languages = languages;
     }
 
+    // Getter estándar para Boolean
     public boolean isPrivate() {
         return isPrivate;
     }
-
-    public void setPrivate(boolean p) {
-        this.isPrivate = p;
+    
+    // Setter estándar
+    public void setPrivate(boolean isPrivate) {
+        this.isPrivate = isPrivate;
     }
 
+    // Helper para evitar nulls en la vista
     private String fixNull(String in) {
         return (in == null) ? "" : in;
     }

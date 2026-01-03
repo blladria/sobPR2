@@ -1,5 +1,4 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%
-    // CORREGIDO: Ahora apunta a "Web" en lugar de "mvc"
-    response.sendRedirect(request.getContextPath() + "/Web/models");
-%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%-- Redirigir al catálogo principal en lugar del registro --%>
+<c:redirect url="/Web/models" />

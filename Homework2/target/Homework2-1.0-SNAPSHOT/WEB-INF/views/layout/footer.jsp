@@ -1,5 +1,6 @@
-<footer class="footer mt-auto py-3 bg-light">
-    <div class="container text-center">
-        <span class="text-muted">&copy; 2026 Models Catalog - Universitat Rovira i Virgili</span>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<footer class="footer">
+    <div class="container">
+        <p class="text-muted">&copy; 2026 Models Catalog - Universitat Rovira i Virgili</p>
     </div>
 </footer>

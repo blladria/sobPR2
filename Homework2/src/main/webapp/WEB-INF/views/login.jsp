@@ -1,72 +1,58 @@
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Sign In - Homework 2</title>
-
-        <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
-        <style>body {
-            padding-top: 70px;
-            padding-bottom: 30px;
-        }</style>
-    </head>
-
-    <body>
-        <jsp:include page="layout/navbar.jsp" />
-
+<html>
+<head>
+    <title>Login</title>
+    <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-static-top">
         <div class="container">
-
-            <jsp:include page="layout/alert.jsp" />
-
-            <div class="row">
-                <div class="col-md-4 col-md-offset-4">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            <h3 class="panel-title">Please Sign In</h3>
+            <div class="navbar-header">
+                <a class="navbar-brand" href="${pageContext.request.contextPath}/Web/models">
+                     <img src="${pageContext.request.contextPath}/resources/img/ETSEcentrat.png" alt="Logo" height="30" style="display:inline-block;">
+                     Models Catalog
+                </a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="active"><a href="${pageContext.request.contextPath}/Web/login">Login</a></li>
+                    <li><a href="${pageContext.request.contextPath}/Web/SignUp">Sign Up</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container" style="margin-top: 50px;">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">Please Sign In</div>
+                <div class="panel-body">
+                    <c:if test="${not empty loginError}">
+                        <div class="alert alert-danger">${loginError}</div>
+                    </c:if>
+                    
+                    <form action="${pageContext.request.contextPath}/Web/login" method="POST">
+                        
+                        <c:set var="retUrl" value="${not empty returnUrl ? returnUrl : loginForm.returnUrl}" />
+                        <input type="hidden" name="returnUrl" value="${retUrl}">
+                        
+                        <div class="form-group">
+                            <label>Username</label>
+                            <input type="text" name="username" class="form-control" value="${loginForm.username}" required autofocus>
                         </div>
-                        <div class="panel-body">
-
-                            <c:if test="${not empty error}">
-                                <div class="alert alert-danger">${error}</div>
-                            </c:if>
-
-                            <form method="POST" action="${pageContext.request.contextPath}/Web/login">
-
-                                <c:if test="${not empty returnUrl}">
-                                    <input type="hidden" name="returnUrl" value="${returnUrl}" />
-                                </c:if>
-
-                                <div class="form-group">
-                                    <label for="username">Username</label>
-                                    <input type="text" class="form-control" id="username" name="username" 
-                                           placeholder="Username" required autofocus value="${username}">
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="password">Password</label>
-                                    <input type="password" class="form-control" id="password" name="password" 
-                                           placeholder="Password" required>
-                                </div>
-
-                                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-                            </form>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" name="password" class="form-control" required>
                         </div>
-                        <div class="panel-footer text-center">
-                            Don't have an account? <a href="${pageContext.request.contextPath}/Web/signup">Sign up</a>
-                        </div>
-                    </div>
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </form>
+                </div>
+                <div class="panel-footer">
+                    Don't have an account? <a href="${pageContext.request.contextPath}/Web/SignUp">Sign Up</a>
                 </div>
             </div>
         </div>
-
-        <jsp:include page="layout/footer.jsp" />
-
-        <script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.1.min.js"></script>
-        <script src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
-    </body>
+    </div>
+</body>
 </html>

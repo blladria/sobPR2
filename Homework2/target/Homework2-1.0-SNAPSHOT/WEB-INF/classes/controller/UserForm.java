@@ -1,20 +1,20 @@
 package deim.urv.cat.homework2.controller;
 
+import jakarta.enterprise.context.RequestScoped;
+import jakarta.inject.Named;
 import jakarta.mvc.binding.MvcBinding;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.FormParam;
 import java.io.Serializable;
 
-// SOLUCIÓN ERROR 500: Eliminamos @Named y @RequestScoped.
-// Al ser un POJO simple, no intenta inyectar los @FormParam durante la petición GET (cargar formulario),
-// evitando la excepción "IllegalStateException: The @FormParam is utilized when the request method is GET".
+@Named("userForm")
+@RequestScoped
 public class UserForm implements Serializable {
-
     private static final long serialVersionUID = 1L;
 
+    // JSR 303 validation
     @NotBlank(message = "Username is required")
     @FormParam("username")
     @MvcBinding
@@ -22,20 +22,19 @@ public class UserForm implements Serializable {
     private String username;
 
     @NotBlank(message = "Password is required")
-    @FormParam("password")
+    @FormParam("password") // Debe coincidir con el 'name' del input en el JSP
     @MvcBinding
     @Size(min = 4, message = "Password must be at least 4 characters")
     private String password;
 
-    @NotBlank(message = "Name is required")
-    @FormParam("name")
+    @NotBlank
+    @FormParam("name") // Unificamos firstName y lastName en 'name'
     @MvcBinding
     private String name;
 
-    @NotBlank(message = "Email is required")
+    @NotBlank
     @FormParam("email")
-    @Email(message = "Email format is not valid")
-    @Pattern(regexp = "^[^@]+@[^@]+\\.[a-zA-Z]{2,}$", message = "Email must be valid (example@domain.com)")
+    @Email(message = "Email should be valid")
     @MvcBinding
     private String email;
 
