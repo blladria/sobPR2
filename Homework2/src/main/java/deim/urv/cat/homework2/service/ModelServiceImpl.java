@@ -1,11 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package deim.urv.cat.homework2.service;
 
 import deim.urv.cat.homework2.model.Model;
-import jakarta.ws.rs.ProcessingException;
+import jakarta.annotation.PostConstruct;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.WebTarget;
@@ -17,89 +14,114 @@ import java.util.Base64;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
+@ApplicationScoped
 public class ModelServiceImpl implements ModelService {
 
-    private Client client;
-    private WebTarget webTarget;
+    // CORRECCIÓN: Se añade "/rest" a la URL porque RESTapp.java tiene @ApplicationPath("rest")
+    private static final String BASE_URI = "http://localhost:8080/PR1_sob_grup_54/rest/api/v1/models";
     
-    // Asegúrate de que este puerto (8080) y nombre de proyecto (PR1_sob_grup_54) son correctos
-    private static final String BASE_URI = "http://localhost:8080/PR1_sob_grup_54/rest/api/v1"; 
+    private Client client;
+    private WebTarget target;
 
-    public ModelServiceImpl() {
+    @PostConstruct
+    public void init() {
         try {
             client = ClientBuilder.newClient();
-            webTarget = client.target(BASE_URI).path("models");
+            target = client.target(BASE_URI);
         } catch (Exception e) {
-            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Error iniciando JAX-RS Client", e);
+            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Error al iniciar el cliente REST", e);
         }
     }
 
     @Override
     public List<Model> findAll(List<String> capabilities, String provider) {
-        // Protección extra si el constructor falló
-        if (webTarget == null) return new ArrayList<>();
-
         try {
-            WebTarget target = webTarget;
+            WebTarget reqTarget = target;
 
-            // 1. Aplicar Filtro Provider
+            // 1. Añadir parámetro provider si existe
             if (provider != null && !provider.isEmpty()) {
-                target = target.queryParam("provider", provider);
+                reqTarget = reqTarget.queryParam("provider", provider);
             }
 
-            // 2. Aplicar Filtro Capabilities
+            // 2. Añadir parámetros capability si existen
             if (capabilities != null && !capabilities.isEmpty()) {
                 for (String cap : capabilities) {
-                    target = target.queryParam("capability", cap);
+                    reqTarget = reqTarget.queryParam("capability", cap);
                 }
             }
 
-            // 3. Hacer la petición GET
-            Response response = target.request(MediaType.APPLICATION_JSON).get();
+            // 3. Hacer la petición GET a la API
+            Response response = reqTarget.request(MediaType.APPLICATION_JSON).get();
 
-            if (response.getStatus() == 200) {
-                // Mapear JSON a Lista de Objetos Model
+            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+                // Mapear la respuesta JSON a una lista de objetos Model
                 return response.readEntity(new GenericType<List<Model>>() {});
             } else {
-                Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.WARNING, "Backend respondió con error: {0}", response.getStatus());
+                Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.WARNING, "La API devolvió código: {0} en URL: {1}", new Object[]{response.getStatus(), reqTarget.getUri()});
                 return new ArrayList<>();
             }
-
-        } catch (ProcessingException e) {
-            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Error procesando JSON o conectando al backend. Verifica que el backend está corriendo.", e);
-            return new ArrayList<>();
         } catch (Exception e) {
-            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Error desconocido en findAll", e);
+            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Error conectando con la API PR1. ¿Está desplegada?", e);
             return new ArrayList<>();
         }
     }
 
     @Override
     public Model find(Long id, String username, String password) {
-        if (webTarget == null) return null;
-        
         try {
-            jakarta.ws.rs.client.Invocation.Builder request = webTarget.path(id.toString())
-                    .request(MediaType.APPLICATION_JSON);
+            // Construir la URL: .../models/{id}
+            WebTarget pathTarget = target.path(String.valueOf(id));
             
-            if (username != null && !username.isEmpty() && password != null && !password.isEmpty()) {
+            var requestBuilder = pathTarget.request(MediaType.APPLICATION_JSON);
+
+            // Si hay credenciales, añadimos cabecera Authorization Basic
+            if (username != null && password != null) {
                 String authString = username + ":" + password;
-                String authHeader = "Basic " + Base64.getEncoder().encodeToString(authString.getBytes("UTF-8"));
-                request.header("Authorization", authHeader);
+                String authHeader = "Basic " + Base64.getEncoder().encodeToString(authString.getBytes());
+                requestBuilder.header("Authorization", authHeader);
             }
 
-            Response response = request.get();
+            Response response = requestBuilder.get();
 
-            if (response.getStatus() == 200) {
+            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
                 return response.readEntity(Model.class);
             } else {
-                 Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.WARNING, "Error al buscar modelo {0}. Status: {1}", new Object[]{id, response.getStatus()});
+                // Si es 401 (No autorizado) o 404 (No encontrado), devolvemos null
+                return null;
             }
-
         } catch (Exception e) {
-            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Excepción en find", e);
+            Logger.getLogger(ModelServiceImpl.class.getName()).log(Level.SEVERE, "Error buscando modelo por ID", e);
+            return null;
         }
-        return null;
+    }
+
+    @Override
+    public List<String> getUniqueCapabilities() {
+        // Como la API no tiene un endpoint específico para capabilities, 
+        // traemos todos los modelos y filtramos en el cliente
+        List<Model> allModels = findAll(null, null);
+        if (allModels == null) return new ArrayList<>();
+
+        return allModels.stream()
+                .map(Model::getMainCapability) 
+                .filter(c -> c != null && !c.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
+    }
+    
+    // Método añadido para soportar el filtro de proveedores del controlador
+    public List<String> getUniqueProviders() {
+        List<Model> allModels = findAll(null, null);
+        if (allModels == null) return new ArrayList<>();
+
+        return allModels.stream()
+                .map(Model::getProvider)
+                .filter(p -> p != null && !p.isEmpty())
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

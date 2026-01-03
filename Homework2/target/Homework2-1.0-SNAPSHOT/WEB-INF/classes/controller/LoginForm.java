@@ -1,34 +1,24 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package deim.urv.cat.homework2.controller;
 
-import jakarta.mvc.binding.MvcBinding;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.FormParam;
-import java.io.Serializable;
+import jakarta.validation.constraints.NotEmpty;
 
-// SIN @Named NI @RequestScoped
-public class LoginForm implements Serializable {
-    @NotBlank(message = "Username required")
+public class LoginForm {
+    @NotEmpty(message = "El usuario es obligatorio")
     @FormParam("username")
-    @MvcBinding
     private String username;
 
-    @NotBlank(message = "Password required")
+    @NotEmpty(message = "La contraseña es obligatoria")
     @FormParam("password")
-    @MvcBinding
     private String password;
     
-    // CAMBIO: Campo para guardar la URL de retorno
+    // Campo oculto para saber dónde volver
     @FormParam("returnUrl")
-    @MvcBinding
     private String returnUrl;
 
-    // Getters y Setters
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
     
