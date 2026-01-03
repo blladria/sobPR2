@@ -1,113 +1,87 @@
-/*
- * Archivo: Homework2/src/main/java/deim/urv/cat/homework2/service/UserServiceImpl.java
- * Ubicación: Frontend (Cliente MVC)
- */
 package deim.urv.cat.homework2.service;
 
 import deim.urv.cat.homework2.model.User;
 import deim.urv.cat.homework2.controller.UserForm;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class UserServiceImpl implements UserService {
 
     private final WebTarget webTarget;
-    private final jakarta.ws.rs.client.Client client;
-    private static final Logger LOGGER = Logger.getLogger(UserServiceImpl.class.getName());
-
-    // URL base del backend
+    private final Client client;
+    // URL de tu Backend (Práctica 1)
     private static final String BASE_URI = "http://localhost:8080/PR1_sob_grup_54/rest/api/v1";
 
     public UserServiceImpl() {
-        client = jakarta.ws.rs.client.ClientBuilder.newClient();
-        // Apunta a .../api/v1/customer
-        webTarget = client.target(BASE_URI).path("customer");
+        this.client = ClientBuilder.newClient();
+        this.webTarget = client.target(BASE_URI).path("customer");
     }
 
-    /**
-     * Busca un usuario por username usando Basic Auth (necesario para endpoints
-     * protegidos) Endpoint: GET /customer/username/{username}
-     */
-    public User findUserByUsername(String username, String password) {
-        try {
-            String authHeader = getAuthHeader(username, password);
-
-            Response response = webTarget.path("username").path(username)
-                    .request(MediaType.APPLICATION_JSON)
-                    .header("Authorization", authHeader)
-                    .get();
-
-            if (response.getStatus() == 200) {
-                return response.readEntity(User.class);
-            }
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error finding user by username", e);
-        }
-        return null;
-    }
-
-    /**
-     * Método legacy de la interfaz, redirigimos o adaptamos si es necesario.
-     * Dado que el backend no tiene búsqueda por email pública, retornamos null
-     * o implementamos si el backend cambia.
-     */
-    @Override
-    public User findUserByEmail(String email) {
-        // No implementado en backend actual
-        return null;
-    }
-
-    @Override
-    public boolean addUser(UserForm user) {
-        try {
-            Response response = webTarget.request(MediaType.APPLICATION_JSON)
-                    .post(Entity.entity(user, MediaType.APPLICATION_JSON));
-
-            return (response.getStatus() == 201);
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error creating user", e);
-            return false;
-        }
+    // Generación robusta de cabecera Basic Auth
+    private String getAuthHeader(String username, String password) {
+        String auth = username + ":" + password;
+        byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+        return "Basic " + new String(encodedAuth);
     }
 
     @Override
     public User validateUser(String username, String password) {
-        // Reutilizamos la lógica de búsqueda que ya valida credenciales
-        return findUserByUsername(username, password);
+        if (username == null || password == null) {
+            return null;
+        }
+
+        try {
+            Response response = client.target(BASE_URI)
+                    .path("customer")
+                    .path(username)
+                    .request(MediaType.APPLICATION_JSON)
+                    .header("Authorization", getAuthHeader(username, password))
+                    .get();
+
+            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+                User user = response.readEntity(User.class);
+                user.setPassword(password); // Guardamos la pass para el objeto de sesión
+                return user;
+            }
+        } catch (Exception e) {
+            // Log de error opcional
+        }
+        return null;
     }
 
-    // --- NUEVO: Método para actualizar usuario (lastConsultedModel) ---
-    public boolean updateUser(User user, String password) {
+    @Override
+    public User getUser(String username, String password) {
+        return validateUser(username, password);
+    }
+
+    @Override
+    public boolean addUser(UserForm userForm) {
         try {
-            if (user.getId() == null) {
-                return false;
-            }
-
-            String authHeader = getAuthHeader(user.getUsername(), password);
-
-            Response response = webTarget.path(user.getId().toString())
-                    .request(MediaType.APPLICATION_JSON)
-                    .header("Authorization", authHeader)
-                    .put(Entity.entity(user, MediaType.APPLICATION_JSON));
-
-            return (response.getStatus() == 204); // 204 No Content es éxito en PUT
+            Response response = webTarget.request(MediaType.APPLICATION_JSON)
+                    .post(Entity.entity(userForm, MediaType.APPLICATION_JSON));
+            return response.getStatus() == Response.Status.CREATED.getStatusCode();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error updating user", e);
             return false;
         }
     }
 
-    private String getAuthHeader(String username, String password) {
+    // Método de actualización (utilizado por el ModelController para actualizar el ID del último modelo)
+    public void updateUser(User user, String password) {
         try {
-            String authString = username + ":" + password;
-            return "Basic " + Base64.getEncoder().encodeToString(authString.getBytes("UTF-8"));
+            client.target(BASE_URI)
+                    .path("customer")
+                    .path(user.getUsername())
+                    .request(MediaType.APPLICATION_JSON)
+                    .header("Authorization", getAuthHeader(user.getUsername(), password))
+                    .put(Entity.entity(user, MediaType.APPLICATION_JSON));
         } catch (Exception e) {
-            return "";
+            // Error silencioso
         }
     }
 }
