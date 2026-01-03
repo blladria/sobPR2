@@ -1,53 +1,72 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <title>Login - AI Models</title>
-    <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <%@ include file="layout/navbar.jsp" %>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sign In - Homework 2</title>
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-4">
-                <div class="card shadow">
-                    <div class="card-header bg-dark text-white text-center">
-                        <h4>Login with your Account</h4>
-                    </div>
-                    <div class="card-body">
-                        <c:if test="${not empty loginError}">
-                            <div class="alert alert-danger">${loginError}</div>
-                        </c:if>
-                        <c:if test="${param.registered}">
-                            <div class="alert alert-success">Registro completado. Por favor, inicia sesión.</div>
-                        </c:if>
+        <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
+        <style>body {
+            padding-top: 70px;
+            padding-bottom: 30px;
+        }</style>
+    </head>
 
-                        <form action="login" method="post">
-                            <input type="hidden" name="returnUrl" value="${returnUrl}"/>
-                            
-                            <div class="mb-3">
-                                <label class="form-label">Usuario</label>
-                                <input type="text" name="username" class="form-control" placeholder="User Name" required autofocus>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Contraseña</label>
-                                <input type="password" name="password" class="form-control" placeholder="Password" required>
-                            </div>
-                            <div class="mb-3 form-check">
-                                <input type="checkbox" class="form-check-input" id="remember">
-                                <label class="form-check-label" for="remember">Remember me</label>
-                            </div>
-                            <button type="submit" class="btn btn-dark w-100">LOGIN NOW</button>
-                        </form>
-                    </div>
-                    <div class="card-footer text-center">
-                        <small>¿No tienes cuenta? <a href="${pageContext.request.contextPath}/SignUp">Regístrate aquí</a></small>
+    <body>
+        <jsp:include page="layout/navbar.jsp" />
+
+        <div class="container">
+
+            <jsp:include page="layout/alert.jsp" />
+
+            <div class="row">
+                <div class="col-md-4 col-md-offset-4">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">Please Sign In</h3>
+                        </div>
+                        <div class="panel-body">
+
+                            <c:if test="${not empty error}">
+                                <div class="alert alert-danger">${error}</div>
+                            </c:if>
+
+                            <form method="POST" action="${pageContext.request.contextPath}/mvc/login">
+
+                                <c:if test="${not empty returnUrl}">
+                                    <input type="hidden" name="returnUrl" value="${returnUrl}" />
+                                </c:if>
+
+                                <div class="form-group">
+                                    <label for="username">Username</label>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="Username" required autofocus value="${username}">
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="password">Password</label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Password" required>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                            </form>
+                        </div>
+                        <div class="panel-footer text-center">
+                            Don't have an account? <a href="${pageContext.request.contextPath}/mvc/signup">Sign up</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</body>
+
+        <jsp:include page="layout/footer.jsp" />
+
+        <script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.1.min.js"></script>
+        <script src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
+    </body>
 </html>

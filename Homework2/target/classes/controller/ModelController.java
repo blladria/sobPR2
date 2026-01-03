@@ -1,108 +1,94 @@
 package deim.urv.cat.homework2.controller;
 
 import deim.urv.cat.homework2.model.Model;
-import deim.urv.cat.homework2.model.User;
+import deim.urv.cat.homework2.model.User; // Asegúrate de importar tu clase User
 import deim.urv.cat.homework2.service.ModelService;
 import jakarta.inject.Inject;
 import jakarta.mvc.Controller;
 import jakarta.mvc.Models;
-import jakarta.mvc.UriRef;
+import jakarta.mvc.View;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import jakarta.ws.rs.core.Context;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-@Path("models")
 @Controller
+@Path("models")
 public class ModelController {
 
     @Inject
-    private Models models;
-    
+    ModelService modelService;
+
     @Inject
-    private HttpServletRequest request;
-    
-    // Inyección del servicio (CDI) para usar la implementación que conecta a la API
-    @Inject
-    private ModelService service;
+    Models models;
+
+    @Context
+    HttpServletRequest request;
 
     @GET
-    public String showModels(
-            @QueryParam("capability") String capability,
+    @View("model-list.jsp")
+    public void showModels(@QueryParam("capability") String capability,
             @QueryParam("provider") String provider) {
-        try {
-            // 1. Preparar filtro
-            List<String> capabilitiesFilter = new ArrayList<>();
-            if (capability != null && !capability.isEmpty()) {
-                capabilitiesFilter.add(capability);
-            }
 
-            // 2. Llamar al servicio (que llama a la API)
-            List<Model> list = service.findAll(capabilitiesFilter, provider);
-            if (list == null) list = new ArrayList<>();
-            
-            // 3. Obtener lista de capabilities para el desplegable
-            List<String> allCapabilities = service.getUniqueCapabilities();
+        // Convertir String único a Lista para el servicio
+        List<String> capabilities = (capability != null && !capability.isEmpty())
+                ? Arrays.asList(capability)
+                : Collections.emptyList();
 
-            // 4. Pasar datos a la vista
-            if (models != null) {
-                // CORRECCIÓN: Usamos "models" porque en el JSP tienes items="${models}"
-                models.put("models", list); 
-                models.put("capabilitiesList", allCapabilities);
-                models.put("selectedProvider", provider);
-                models.put("selectedCapability", capability);
-            }
-        } catch (Exception e) {
-            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error en ModelController", e);
-            if (models != null) models.put("models", new ArrayList<>());
-        }
-        return "model-list.jsp";
+        // 1. Cargar modelos
+        models.put("models", modelService.findAll(capabilities, provider));
+
+        // 2. Cargar datos para los filtros (IMPORTANTE para que no falle el JSP)
+        models.put("uniqueCapabilities", modelService.getUniqueCapabilities());
+        models.put("uniqueProviders", modelService.getUniqueProviders());
     }
 
     @GET
     @Path("detail")
-    @UriRef("detail")
-    public String showDetail(@QueryParam("id") Long id) {
+    public String showModelDetail(@QueryParam("id") Long id) {
+        if (id == null) {
+            return "redirect:/models";
+        }
+
+        // Obtenemos usuario de sesión para intentar acceder con credenciales si las hay
+        HttpSession session = request.getSession(false);
+        User user = (session != null) ? (User) session.getAttribute("user") : null;
+
+        String username = (user != null) ? user.getUsername() : null;
+        String password = (user != null) ? user.getPassword() : null;
+
         try {
-            HttpSession session = request.getSession(false);
-            String username = null;
-            String password = null;
-            boolean isLoggedIn = false;
+            // CORRECCIÓN ERROR 2: El servicio usa 'find' con 3 argumentos
+            Model model = modelService.find(id, username, password);
 
-            // Verificar si el usuario está logueado en la sesión web
-            if (session != null && session.getAttribute("user") != null) {
-                User user = (User) session.getAttribute("user");
-                username = user.getUsername();
-                password = user.getPassword(); 
-                isLoggedIn = true;
+            if (model == null) {
+                return "redirect:/models";
             }
 
-            // Buscar modelo (si es privado, el servicio usará las credenciales)
-            Model model = service.find(id, username, password);
+            // CORRECCIÓN ERROR 1: El getter es isPrivate()
+            if (model.isPrivate()) {
 
-            if (model != null) {
-                models.put("model", model);
-                return "model-detail.jsp";
-            } else {
-                // Si falla y no estamos logueados, redirigir a login
-                if (!isLoggedIn) {
-                    String returnUrl = "models/detail?id=" + id;
-                    String encodedUrl = URLEncoder.encode(returnUrl, StandardCharsets.UTF_8.toString());
-                    return "redirect:/login?returnUrl=" + encodedUrl;
+                // Si es privado y NO estamos logueados, redirigimos al login
+                if (user == null) {
+                    String currentUrl = "/models/detail?id=" + id;
+                    // 'returnUrl' debe coincidir con lo que espera LoginController
+                    return "redirect:/login?returnUrl=" + currentUrl;
                 }
-                models.put("error", "Model not found or access denied.");
-                return "model-list.jsp"; 
             }
+
+            models.put("model", model);
+            return "model-detail.jsp";
+
         } catch (Exception e) {
-            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error recuperando detalle", e);
-            return "error.jsp"; 
+            // Si el servicio falla (por ejemplo, 403 Forbidden porque no pasamos credenciales)
+            // asumimos que hace falta login y redirigimos.
+            String currentUrl = "/models/detail?id=" + id;
+            return "redirect:/login?returnUrl=" + currentUrl;
         }
     }
 }

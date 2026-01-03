@@ -1,79 +1,155 @@
-<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+
 <!DOCTYPE html>
-<html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>AI Models List</title>
-    <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        /* Estilo para evitar el "salto" de imágenes */
-        .card-img-top {
-            width: 100%;
-            height: 200px; /* Altura fija */
-            object-fit: cover; /* Recorta la imagen para que encaje bien */
-            background-color: #f0f0f0; /* Color de fondo mientras carga */
-        }
-        .model-card {
-            transition: transform 0.2s;
-        }
-        .model-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-    </style>
-</head>
-<body>
-    
-    <%@include file="layout/navbar.jsp" %>
-    
-    <%@include file="layout/alert.jsp" %>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Model List - Homework 2</title>
 
-    <div class="container mt-4">
-        <h2>Available Models</h2>
-        
-        <form action="${pageContext.request.contextPath}/mvc/models" method="GET" class="mb-4 p-3 bg-light rounded">
+        <link href="${pageContext.request.contextPath}/resources/css/bootstrap.min.css" rel="stylesheet">
+
+        <style>
+            /* Ajustes adicionales para que las cards se vean bien */
+            .card {
+                background: #fff;
+                margin-bottom: 20px;
+                position: relative;
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+                word-wrap: break-word;
+                background-clip: border-box;
+                border: 1px solid rgba(0,0,0,.125);
+                border-radius: .25rem;
+            }
+            .card-body {
+                flex: 1 1 auto;
+                padding: 1.25rem;
+            }
+            .card-footer {
+                padding: 0.75rem 1.25rem;
+                background-color: rgba(0,0,0,.03);
+                border-top: 1px solid rgba(0,0,0,.125);
+            }
+            .shadow-sm {
+                box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+            }
+            .h-100 {
+                height: 100%!important;
+            }
+
+            /* Ajuste para separar el contenido del navbar */
+            body {
+                padding-top: 70px;
+                padding-bottom: 30px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <jsp:include page="layout/navbar.jsp" />
+
+        <div class="container">
+
+            <jsp:include page="layout/alert.jsp" />
+
             <div class="row">
-                <div class="col-md-4">
-                    <input type="text" name="capability" class="form-control" placeholder="Filter by Capability (e.g. text-generation)">
-                </div>
-                <div class="col-md-4">
-                    <input type="text" name="provider" class="form-control" placeholder="Filter by Provider (e.g. OpenAI)">
-                </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary btn-block">Filter</button>
-                    <a href="${pageContext.request.contextPath}/mvc/models" class="btn btn-secondary">Reset</a>
-                </div>
-            </div>
-        </form>
+                <div class="col-md-3">
+                    <div class="panel panel-default shadow-sm">
+                        <div class="panel-heading">
+                            <h3 class="panel-title"><i class="glyphicon glyphicon-filter"></i> Filters</h3>
+                        </div>
+                        <div class="panel-body">
+                            <form action="${pageContext.request.contextPath}/models" method="GET">
 
-        <div class="row">
-            <c:forEach items="${models}" var="model">
-                <div class="col-md-4 mb-4">
-                    <div class="card model-card h-100">
-                        <img src="${model.image}" 
-                             class="card-img-top" 
-                             alt="${model.name}"
-                             onerror="this.src='${pageContext.request.contextPath}/resources/img/mistral.png';"> 
-                        
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">${model.name}</h5>
-                            <h6 class="card-subtitle mb-2 text-muted">${model.provider}</h6>
-                            <p class="card-text text-truncate">${model.description}</p>
-                            
-                            <div class="mt-auto">
-                                <a href="${pageContext.request.contextPath}/mvc/models/${model.name}" class="btn btn-info btn-sm">View Details</a>
-                            </div>
+                                <div class="form-group">
+                                    <label for="capability">Capability</label>
+                                    <select name="capability" id="capability" class="form-control">
+                                        <option value="">All Capabilities</option>
+                                        <c:forEach items="${uniqueCapabilities}" var="cap">
+                                            <option value="${cap}" ${param.capability == cap ? 'selected' : ''}>${cap}</option>
+                                        </c:forEach>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="provider">Provider</label>
+                                    <select name="provider" id="provider" class="form-control">
+                                        <option value="">All Providers</option>
+                                        <c:forEach items="${uniqueProviders}" var="prov">
+                                            <option value="${prov}" ${param.provider == prov ? 'selected' : ''}>${prov}</option>
+                                        </c:forEach>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    Apply Filters
+                                </button>
+                                <a href="${pageContext.request.contextPath}/models" class="btn btn-default btn-block">Clear</a>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </c:forEach>
+
+                <div class="col-md-9">
+                    <h2 style="margin-top:0; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">Available Models</h2>
+
+                    <div class="row">
+                        <c:forEach items="${models}" var="model">
+                            <div class="col-md-4 col-sm-6">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                                            <div style="width: 50px; height: 50px; background: #f8f9fa; border-radius: 50%; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; margin-right: 15px; overflow: hidden;">
+                                                <c:choose>
+                                                    <c:when test="${not empty model.logo}">
+                                                        <img src="${model.logo}" alt="logo" style="max-width: 100%; max-height: 100%;">
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        <span style="font-size: 18px; font-weight: bold; color: #555;">${model.provider.substring(0,1)}</span>
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </div>
+                                            <div>
+                                                <h4 style="margin: 0; font-size: 16px; font-weight: bold;">${model.name}</h4>
+                                                <small class="text-muted">${model.provider}</small>
+                                            </div>
+                                        </div>
+
+                                        <p style="font-size: 13px; color: #666; height: 60px; overflow: hidden;">
+                                            ${model.description}
+                                        </p>
+
+                                        <div style="margin-top: 10px;">
+                                            <span class="label label-info">${model.mainCapability}</span>
+                                            <c:if test="${model.private}">
+                                                <span class="label label-warning"><i class="glyphicon glyphicon-lock"></i> Private</span>
+                                            </c:if>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white text-center">
+                                        <a href="${pageContext.request.contextPath}/models/detail?id=${model.id}" class="btn btn-primary btn-sm btn-block">View Details</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:forEach>
+
+                        <c:if test="${empty models}">
+                            <div class="col-12">
+                                <div class="alert alert-info">No models found matching your criteria.</div>
+                            </div>
+                        </c:if>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <%@include file="layout/footer.jsp" %>
+        <jsp:include page="layout/footer.jsp" />
 
-    <script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.1.min.js"></script>
-    <script src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
-</body>
+        <script src="${pageContext.request.contextPath}/resources/js/jquery-1.11.1.min.js"></script>
+        <script src="${pageContext.request.contextPath}/resources/js/bootstrap.min.js"></script>
+    </body>
 </html>

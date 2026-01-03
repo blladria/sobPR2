@@ -6,12 +6,11 @@ import jakarta.mvc.Controller;
 import jakarta.mvc.Models;
 import jakarta.mvc.binding.BindingResult;
 import jakarta.validation.Valid;
-import jakarta.validation.executable.ExecutableType;
-import jakarta.validation.executable.ValidateOnExecution;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Path("SignUp")
@@ -19,16 +18,16 @@ import java.util.logging.Logger;
 public class SignUpFormController {
 
     @Inject
-    private Logger log;
+    private Models models;
+
+    @Inject
+    private BindingResult bindingResult;
 
     @Inject
     private UserService service;
 
     @Inject
-    private Models models;
-
-    @Inject
-    private BindingResult bindingResult;
+    private Logger log;
 
     @GET
     public String showForm() {
@@ -36,23 +35,30 @@ public class SignUpFormController {
     }
 
     @POST
-    @ValidateOnExecution(type = ExecutableType.NONE)
-    public String signUp(@Valid @BeanParam UserForm userForm) {
+    public String register(@Valid @BeanParam UserForm userForm) {
+        // 1. Comprobar errores de validación (Email mal formado, pass corto, etc.)
         if (bindingResult.isFailed()) {
             models.put("errors", bindingResult.getAllErrors());
-            return "signup-form.jsp";
+            models.put("userForm", userForm); // Mantener datos
+            return "signup-form.jsp"; // Volver al formulario mostrando errores
         }
 
-        // Llamamos al servicio para crear el usuario
-        boolean success = service.addUser(userForm);
+        try {
+            // 2. Intentar guardar en BD
+            boolean success = service.addUser(userForm);
 
-        if (success) {
-            // CAMBIO SOLICITADO: Redirigir al login en lugar de mostrar success.jsp
-            // Añadimos ?registered=true por si quieres mostrar un mensaje de éxito en el login
-            return "redirect:login?registered=true"; 
-        } else {
-            // Si falla (ej. usuario ya existe), volvemos al formulario con error
-            models.put("formError", "El usuario ya existe o hubo un error.");
+            if (success) {
+                // Éxito: Redirigir a Login o Success
+                return "redirect:/login";
+            } else {
+                // Fallo del servicio (Usuario ya existe, error BD)
+                models.put("globalError", "Registration failed. User or Email might already exist.");
+                models.put("userForm", userForm);
+                return "signup-form.jsp";
+            }
+        } catch (Exception e) {
+            log.log(Level.SEVERE, "Error in SignUp", e);
+            models.put("globalError", "System error during registration.");
             return "signup-form.jsp";
         }
     }
