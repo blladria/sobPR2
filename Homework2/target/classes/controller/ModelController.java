@@ -19,12 +19,12 @@ import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet; // Importante para ordenar alfabéticamente
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.ArrayList; // Por si acaso
 
 @Controller
 @Path("models")
@@ -40,26 +40,32 @@ public class ModelController {
     HttpSession session;
 
     @GET
-    public String listModels(@QueryParam("capability") List<String> capabilities,
+    public String listModels(@QueryParam("capability") String capability,
             @QueryParam("provider") String provider) {
 
-        // 1. Obtener la lista filtrada para MOSTRAR los modelos (lógica actual)
+        // 0. Preparar el filtro de capabilities
+        // Recibimos un String del formulario, pero el servicio espera una Lista.
+        List<String> capabilities = new ArrayList<>();
+        if (capability != null && !capability.trim().isEmpty()) {
+            capabilities.add(capability);
+        }
+
+        // 1. Obtener la lista filtrada para MOSTRAR los modelos
         List<Model> list = modelService.findAll(capabilities, provider);
         models.put("modelList", list);
 
-        // 2. NUEVO: Obtener TODOS los modelos para generar el FILTRO
-        // Llamamos a findAll(null, null) para traer todo sin filtrar
+        // 2. Obtener TODOS los modelos para generar los desplegables
         List<Model> allModels = modelService.findAll(null, null);
 
-        // Usamos un Set para almacenar capacidades únicas (evita duplicados)
-        Set<String> uniqueCapabilities = new HashSet<>();
+        // Usamos TreeSet para que las opciones aparezcan ordenadas alfabéticamente
+        Set<String> uniqueCapabilities = new TreeSet<>();
 
         for (Model m : allModels) {
             // Añadir la capacidad principal
             if (m.getMainCapability() != null && !m.getMainCapability().isEmpty()) {
                 uniqueCapabilities.add(m.getMainCapability());
             }
-            // Opcional: Si quieres que también aparezcan las capacidades de la lista interna
+            // Añadir las capacidades secundarias de la lista
             if (m.getCapabilities() != null) {
                 for (String cap : m.getCapabilities()) {
                     if (cap != null && !cap.isEmpty()) {
@@ -69,11 +75,11 @@ public class ModelController {
             }
         }
 
-        // Pasamos la lista de capacidades únicas a la vista
+        // Pasamos la lista de capacidades ordenadas a la vista
         models.put("allCapabilities", uniqueCapabilities);
 
-        // (Opcional) Hacer lo mismo para "Providers" si quisieras que también fuera dinámico
-        Set<String> uniqueProviders = new HashSet<>();
+        // Hacemos lo mismo para Providers (TreeSet para ordenar)
+        Set<String> uniqueProviders = new TreeSet<>();
         for (Model m : allModels) {
             if (m.getProvider() != null && !m.getProvider().isEmpty()) {
                 uniqueProviders.add(m.getProvider());
@@ -87,7 +93,6 @@ public class ModelController {
     @GET
     @Path("{id}")
     public String showDetail(@PathParam("id") Long id) {
-        // 1. Obtener credenciales si existen en sesión
         User currentUser = (User) session.getAttribute("user");
         String username = null;
         String password = null;
@@ -98,33 +103,26 @@ public class ModelController {
         }
 
         try {
-            // 2. Intentar buscar el modelo. 
-            // Si es privado y no estamos logueados (o credenciales mal), lanzará NotAuthorizedException
             Model model = modelService.find(id, username, password);
 
             if (model != null) {
                 models.put("model", model);
-
-                // 3. ACTUALIZAR 'lastConsultedModelId' SI EL USUARIO ESTÁ LOGUEADO
                 if (currentUser != null) {
                     currentUser.setLastConsultedModelId(id);
-                    // Actualizamos en backend
                     if (userService instanceof UserServiceImpl) {
                         ((UserServiceImpl) userService).updateUser(currentUser, password);
                     }
                 }
                 return "model-detail.jsp";
             } else {
-                // Si devuelve null (ej. 404 Not Found), volvemos al listado
                 return "redirect:/models";
             }
 
         } catch (NotAuthorizedException e) {
-            // REQUISITO CUMPLIDO: Si es privado y no autorizado, redirigir al login
-            Logger.getLogger(ModelController.class.getName()).log(Level.INFO, "Acceso no autorizado a modelo privado. Redirigiendo a Login.");
+            Logger.getLogger(ModelController.class.getName()).log(Level.INFO, "Acceso no autorizado a modelo privado.");
             return "redirect:/login";
         } catch (Exception e) {
-            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error inesperado en showDetail", e);
+            Logger.getLogger(ModelController.class.getName()).log(Level.SEVERE, "Error en showDetail", e);
             return "redirect:/models";
         }
     }
