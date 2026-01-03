@@ -1,5 +1,6 @@
 /*
  * Archivo: Homework2/src/main/java/deim/urv/cat/homework2/controller/ModelController.java
+ * Ubicación: Frontend (Cliente MVC)
  */
 package deim.urv.cat.homework2.controller;
 
@@ -19,8 +20,6 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -44,43 +43,23 @@ public class ModelController {
     public String listModels(@QueryParam("capability") String capability,
             @QueryParam("provider") String provider) {
 
-        System.out.println("--- INICIO listModels ---");
-        System.out.println("Filtros recibidos -> Capability: " + capability + ", Provider: " + provider);
+        // 1. Obtener SIEMPRE todos los modelos del backend (sin filtrar allí)
+        List<Model> allModels = modelService.findAll(null, null);
 
-        // 1. Obtener SIEMPRE todos los modelos del backend
-        List<Model> allModels = new ArrayList<>();
-        try {
-            allModels = modelService.findAll(null, null);
-        } catch (Exception e) {
-            System.out.println("ERROR CRÍTICO llamando al servicio REST: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        if (allModels == null) {
-            System.out.println("ADVERTENCIA: El servicio devolvió NULL. Inicializando lista vacía.");
-            allModels = new ArrayList<>();
-        }
-
-        System.out.println("Modelos recuperados del Backend: " + allModels.size());
-
+        // Listas para almacenar los resultados filtrados y las opciones de los desplegables
         List<Model> filteredList = new ArrayList<>();
         Set<String> uniqueCapabilities = new TreeSet<>();
         Set<String> uniqueProviders = new TreeSet<>();
 
-        // 2. Procesar filtros y limpiar datos
+        // 2. Recorremos TODOS los modelos una sola vez
         for (Model m : allModels) {
-            // Protección contra modelos nulos (por si acaso)
-            if (m == null) {
-                continue;
-            }
 
-            // Debug rápido de qué estamos procesando
-            // System.out.println("Procesando modelo: " + m.getName());
-            // A) Generar opciones para desplegables
+            // A) Generar las opciones para los desplegables (Providers)
             if (m.getProvider() != null && !m.getProvider().isEmpty()) {
                 uniqueProviders.add(m.getProvider());
             }
 
+            // B) Generar las opciones para los desplegables (Capabilities normalizadas)
             if (m.getMainCapability() != null && !m.getMainCapability().isEmpty()) {
                 uniqueCapabilities.add(formatText(m.getMainCapability()));
             }
@@ -92,16 +71,21 @@ public class ModelController {
                 }
             }
 
-            // B) LÓGICA DE FILTRADO
+            // C) LÓGICA DE FILTRADO (Aquí arreglamos el problema)
+            // Comprobamos si el modelo cumple con el Provider seleccionado
             boolean matchesProvider = (provider == null || provider.trim().isEmpty())
                     || (m.getProvider() != null && m.getProvider().equals(provider));
 
+            // Comprobamos si el modelo cumple con la Capability seleccionada
+            // Usamos formatText() aquí también para que "Code Generation" coincida con "code-generation"
             boolean matchesCapability = (capability == null || capability.trim().isEmpty());
 
-            if (!matchesCapability) {
+            if (!matchesCapability) { // Si hay algo seleccionado en el filtro...
+                // Verificar Main Capability
                 if (m.getMainCapability() != null && formatText(m.getMainCapability()).equals(capability)) {
                     matchesCapability = true;
-                } else if (m.getCapabilities() != null) {
+                } // Verificar lista de Capabilities
+                else if (m.getCapabilities() != null) {
                     for (String cap : m.getCapabilities()) {
                         if (formatText(cap).equals(capability)) {
                             matchesCapability = true;
@@ -111,37 +95,16 @@ public class ModelController {
                 }
             }
 
+            // Si cumple AMBOS filtros, lo añadimos a la lista que se mostrará
             if (matchesProvider && matchesCapability) {
                 filteredList.add(m);
             }
         }
 
-        System.out.println("Modelos tras el filtrado: " + filteredList.size());
-
-        // --- ORDENACIÓN Z-A ---
-        try {
-            Collections.sort(filteredList, new Comparator<Model>() {
-                @Override
-                public int compare(Model m1, Model m2) {
-                    String n1 = m1.getName();
-                    String n2 = m2.getName();
-                    if (n1 == null) {
-                        n1 = "";
-                    }
-                    if (n2 == null) {
-                        n2 = "";
-                    }
-                    return n2.compareToIgnoreCase(n1); // Orden Inverso
-                }
-            });
-        } catch (Exception e) {
-            System.out.println("Error al ordenar la lista: " + e.getMessage());
-        }
-
         // 3. Pasar los datos a la vista
-        models.put("modelList", filteredList);
-        models.put("allCapabilities", uniqueCapabilities);
-        models.put("allProviders", uniqueProviders);
+        models.put("modelList", filteredList); // La lista filtrada manualmente
+        models.put("allCapabilities", uniqueCapabilities); // Opciones del desplegable
+        models.put("allProviders", uniqueProviders); // Opciones del desplegable
 
         return "model-list.jsp";
     }
@@ -183,13 +146,22 @@ public class ModelController {
         }
     }
 
+    /**
+     * Método auxiliar para limpiar y estandarizar los textos. Convierte
+     * "code-generation" -> "Code Generation".
+     */
     private String formatText(String input) {
         if (input == null) {
             return "";
         }
+
+        // 1. Reemplazar guiones por espacios
         String text = input.replace("-", " ");
+
+        // 2. Convertir a "Title Case"
         StringBuilder result = new StringBuilder();
         String[] words = text.split("\\s+");
+
         for (String word : words) {
             if (!word.isEmpty()) {
                 if (result.length() > 0) {
@@ -199,6 +171,7 @@ public class ModelController {
                         .append(word.substring(1).toLowerCase());
             }
         }
+
         return result.toString();
     }
 }

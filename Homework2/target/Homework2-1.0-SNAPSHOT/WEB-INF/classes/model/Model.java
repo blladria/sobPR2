@@ -1,8 +1,10 @@
 /*
- * Archivo: Homework2/src/main/java/deim/urv/cat/homework2/model/Model.java
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package deim.urv.cat.homework2.model;
 
+import jakarta.json.bind.annotation.JsonbProperty;
 import java.io.Serializable;
 import java.util.List;
 
@@ -12,23 +14,36 @@ public class Model implements Serializable {
 
     private Long id;
     private String name;
-    private String provider;
+    private String provider; 
+    private String logo; 
     private String mainCapability;
-    private List<String> capabilities;
-    private boolean isPrivate; // Cuidado con la convención de nombres JSON (a veces es 'private')
-
-    // --- NUEVOS CAMPOS ---
-    private String description;
+    private String summary;
     private String version;
-    private String contextWindow; // String para permitir "128k" etc.
-    private Integer qualityIndex;
+    private String description;
+    private List<String> capabilities;
+    
+    // Campos de especificación
     private String license;
+    private Integer contextLength;
+    private Double qualityIndex;
+    private String trainingDataDate;
     private String lastUpdated;
+    private String inputType;
+    private String outputType;
+    private String publisher;
+    private String languages;
+    
+    // Control de privacidad
+    // Mapea tanto si el JSON trae "private":true como "isPrivate":true
+    @JsonbProperty("private")
+    private boolean isPrivate;
 
+    // CONSTRUCTOR VACÍO (Obligatorio para JAX-RS)
     public Model() {
     }
 
-    // --- GETTERS Y SETTERS ---
+    // Getters y Setters
+
     public Long getId() {
         return id;
     }
@@ -38,7 +53,7 @@ public class Model implements Serializable {
     }
 
     public String getName() {
-        return name;
+        return fixNull(name);
     }
 
     public void setName(String name) {
@@ -46,19 +61,51 @@ public class Model implements Serializable {
     }
 
     public String getProvider() {
-        return provider;
+        return fixNull(provider);
     }
 
     public void setProvider(String provider) {
         this.provider = provider;
     }
 
+    public String getLogo() {
+        return fixNull(logo);
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
+    }
+
     public String getMainCapability() {
-        return mainCapability;
+        return fixNull(mainCapability);
     }
 
     public void setMainCapability(String mainCapability) {
         this.mainCapability = mainCapability;
+    }
+
+    public String getSummary() {
+        return fixNull(summary);
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getVersion() {
+        return fixNull(version);
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getDescription() {
+        return fixNull(description);
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public List<String> getCapabilities() {
@@ -69,60 +116,90 @@ public class Model implements Serializable {
         this.capabilities = capabilities;
     }
 
-    public boolean isPrivate() {
-        return isPrivate;
-    }
-
-    public void setPrivate(boolean isPrivate) {
-        this.isPrivate = isPrivate;
-    }
-
-    // Nuevos
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getContextWindow() {
-        return contextWindow;
-    }
-
-    public void setContextWindow(String contextWindow) {
-        this.contextWindow = contextWindow;
-    }
-
-    public Integer getQualityIndex() {
-        return qualityIndex;
-    }
-
-    public void setQualityIndex(Integer qualityIndex) {
-        this.qualityIndex = qualityIndex;
-    }
-
     public String getLicense() {
-        return license;
+        return fixNull(license);
     }
 
     public void setLicense(String license) {
         this.license = license;
     }
 
+    public Integer getContextLength() {
+        return contextLength;
+    }
+
+    public void setContextLength(Integer contextLength) {
+        this.contextLength = contextLength;
+    }
+
+    public Double getQualityIndex() {
+        return qualityIndex;
+    }
+
+    public void setQualityIndex(Double qualityIndex) {
+        this.qualityIndex = qualityIndex;
+    }
+
+    public String getTrainingDataDate() {
+        return fixNull(trainingDataDate);
+    }
+
+    public void setTrainingDataDate(String trainingDataDate) {
+        this.trainingDataDate = trainingDataDate;
+    }
+
     public String getLastUpdated() {
-        return lastUpdated;
+        return fixNull(lastUpdated);
     }
 
     public void setLastUpdated(String lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public String getInputType() {
+        return fixNull(inputType);
+    }
+
+    public void setInputType(String inputType) {
+        this.inputType = inputType;
+    }
+
+    public String getOutputType() {
+        return fixNull(outputType);
+    }
+
+    public void setOutputType(String outputType) {
+        this.outputType = outputType;
+    }
+
+    public String getPublisher() {
+        return fixNull(publisher);
+    }
+
+    public void setPublisher(String publisher) {
+        this.publisher = publisher;
+    }
+
+    public String getLanguages() {
+        return fixNull(languages);
+    }
+
+    public void setLanguages(String languages) {
+        this.languages = languages;
+    }
+
+    // Getter estándar para Boolean
+    public boolean isPrivate() {
+        return isPrivate;
+    }
+    
+    // Setter estándar
+    public void setPrivate(boolean isPrivate) {
+        this.isPrivate = isPrivate;
+    }
+
+    // Helper para evitar nulls en la vista
+    private String fixNull(String in) {
+        return (in == null) ? "" : in;
     }
 }
