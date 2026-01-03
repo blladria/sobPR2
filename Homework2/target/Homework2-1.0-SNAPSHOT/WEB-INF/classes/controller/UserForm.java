@@ -32,7 +32,6 @@ public class UserForm {
     @Size(min = 4)
     private String password;
 
-    // Getters y Setters
     public String getName() {
         return name;
     }

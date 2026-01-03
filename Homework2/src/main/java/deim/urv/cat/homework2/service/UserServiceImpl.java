@@ -5,7 +5,6 @@ import deim.urv.cat.homework2.controller.UserForm;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
 import jakarta.ws.rs.client.Entity;
-import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.nio.charset.StandardCharsets;
@@ -30,7 +29,9 @@ public class UserServiceImpl implements UserService {
         if (username == null || password == null) {
             return null;
         }
+
         try {
+            // URL: .../rest/api/v1/customer/{username}
             Response response = client.target(BASE_URI)
                     .path("customer")
                     .path(username)
@@ -40,7 +41,7 @@ public class UserServiceImpl implements UserService {
 
             if (response.getStatus() == 200) {
                 User user = response.readEntity(User.class);
-                user.setPassword(password);
+                user.setPassword(password); // Guardamos pass para la sesión del front
                 return user;
             }
         } catch (Exception e) {
@@ -56,6 +57,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean addUser(UserForm userForm) {
+        // IMPORTANTE: Creamos el objeto User sin el campo 'surname' 
+        // para que el Backend no dé error de "Unrecognized field"
         User newUser = new User();
         newUser.setName(userForm.getName());
         newUser.setUsername(userForm.getUsername());
@@ -67,7 +70,8 @@ public class UserServiceImpl implements UserService {
                     .path("customer")
                     .request(MediaType.APPLICATION_JSON)
                     .post(Entity.entity(newUser, MediaType.APPLICATION_JSON));
-            return response.getStatus() == Response.Status.CREATED.getStatusCode();
+
+            return response.getStatus() == 201; // Created
         } catch (Exception e) {
             return false;
         }
@@ -75,6 +79,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateUser(User user, String password) {
+        if (user == null || user.getUsername() == null) {
+            return;
+        }
+
         try {
             client.target(BASE_URI)
                     .path("customer")

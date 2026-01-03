@@ -12,12 +12,13 @@ public class User implements Serializable {
     private String email;
     private String password;
     private Long lastConsultedModelId;
-    private List<Map<String, String>> links; // Para HATEOAS
+
+    // Lista para capturar los enlaces HATEOAS del JSON del backend
+    private List<Map<String, String>> links;
 
     public User() {
     }
 
-    // Getters y Setters coincidiendo exactamente con Customer.java
     public Long getId() {
         return id;
     }
